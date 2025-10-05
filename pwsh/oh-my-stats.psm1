@@ -55,13 +55,67 @@ function Get-Icon {
     }
 }
 
+# Cache functions for performance optimization
+function Test-CacheValid {
+    param([string]$CacheFile)
+
+    if (-not (Test-Path $CacheFile)) {
+        return $false
+    }
+
+    try {
+        $cacheAge = (Get-Date) - (Get-Item $CacheFile).LastWriteTime
+        # Cache valid for 7 days
+        return $cacheAge.TotalDays -lt 7
+    } catch {
+        return $false
+    }
+}
+
+function Get-SystemInfoCache {
+    $cacheDir = Join-Path $HOME ".cache/oh-my-stats"
+    $cacheFile = Join-Path $cacheDir "system-info.json"
+
+    if (Test-CacheValid $cacheFile) {
+        try {
+            $cached = Get-Content $cacheFile -Raw | ConvertFrom-Json
+            Write-Verbose "Using cached system info (age: $((Get-Date) - (Get-Item $cacheFile).LastWriteTime))"
+            return $cached
+        } catch {
+            Write-Verbose "Cache read failed: $_"
+            return $null
+        }
+    }
+
+    return $null
+}
+
+function Save-SystemInfoCache {
+    param($SystemInfo)
+
+    $cacheDir = Join-Path $HOME ".cache/oh-my-stats"
+    $cacheFile = Join-Path $cacheDir "system-info.json"
+
+    try {
+        if (-not (Test-Path $cacheDir)) {
+            New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+        }
+
+        $SystemInfo | ConvertTo-Json -Depth 5 | Set-Content $cacheFile -Force
+        Write-Verbose "Saved system info to cache"
+    } catch {
+        Write-Verbose "Failed to save cache: $_"
+    }
+}
+
 # Main function: Show system statistics
 function Show-SystemStats {
     [CmdletBinding()]
     param(
         [switch]$Compact,
         [switch]$NoModuleStatus,
-        [string]$ConfigPath
+        [string]$ConfigPath,
+        [switch]$RefreshCache
     )
 
     # Load custom config if provided

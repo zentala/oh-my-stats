@@ -122,7 +122,154 @@ Z czasem można dodawać nowe wiersze do CSV - testy automatycznie pokryją nowe
   - [ ] Brak dostępu do C: (permissions)
   - [ ] C: jako dysk sieciowy (mapped drive)
 
-## Priority 2 - Error Handling (DO FIRST)
+## Priority 2 - Error Handling (DO FIRST) ✅ DONE
+
+All error handling implemented and tested.
+
+---
+
+## Priority 2.5 - Performance Optimization (CRITICAL)
+
+**Problem:** Module load takes ~5s, target is <1s
+
+**Root cause:** Query'owanie danych które się nie zmieniają przy każdym uruchomieniu:
+- Get-CimInstance Win32_OperatingSystem (~1s)
+- Get-CimInstance Win32_Processor (~1s)
+- Get-CimInstance Win32_PhysicalMemory (~0.5s)
+- Get-ItemProperty registry 2x (~0.5s)
+- Get-Counter CPU load (~1s)
+
+**Solution:** Cache static data, query tylko dynamic data
+
+### Data Classification
+
+**STATIC (cache, nie zmienia się):**
+- OS version (Windows 11 Home 24H2)
+- OS build number (26100)
+- CPU name (Intel Core i7-8750H)
+- CPU cores (6)
+- CPU threads (12)
+- CPU base speed (2.2 GHz)
+- RAM total (32 GB)
+- RAM speed (2667 MHz)
+- Disk total (930 GB)
+- Architecture (x64)
+
+**DYNAMIC (query zawsze):**
+- CPU load % (zmienia się co sekundę)
+- RAM used % (zmienia się)
+- Disk used % (zmienia się)
+- Process count (zmienia się)
+- Terminal count (zmienia się)
+- Uptime (zmienia się)
+
+### Cache Architecture
+
+**Cache file location:**
+```powershell
+$cacheDir = Join-Path $HOME ".cache/oh-my-stats"
+$cacheFile = Join-Path $cacheDir "system-info.json"
+```
+
+**Cache structure:**
+```json
+{
+  "version": "1.0",
+  "cached_at": "2025-01-06T12:34:56Z",
+  "system": {
+    "os_name": "Windows 11 Home",
+    "os_short": "Win11 Home",
+    "os_version": "24H2",
+    "os_build": "26100",
+    "os_architecture": "x64"
+  },
+  "cpu": {
+    "name": "Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz",
+    "short_name": "i7-8750H",
+    "cores": 6,
+    "threads": 12,
+    "base_speed_ghz": 2.2
+  },
+  "ram": {
+    "total_gb": 32.0,
+    "speed": "2667MHz"
+  },
+  "disk": {
+    "total_gb": 930
+  }
+}
+```
+
+**Cache validation:**
+- Check if file exists
+- Check if `cached_at` < 7 days old
+- If invalid: regenerate
+
+**Implementation steps:**
+
+1. **Add cache functions:**
+   - `Get-SystemInfoCache()` - load from cache if valid
+   - `Save-SystemInfoCache($data)` - save to cache
+   - `Test-CacheValid($cacheFile)` - check if cache usable
+
+2. **Modify Show-SystemStats:**
+   ```powershell
+   # Try to load from cache
+   $cached = Get-SystemInfoCache
+
+   if ($cached) {
+       # Use cached static data
+       $cpuName = $cached.cpu.name
+       $cpuShort = $cached.cpu.short_name
+       # ... etc
+
+       # Query only dynamic data
+       $cpuLoad = (Get-CimInstance Win32_Processor).LoadPercentage
+       # ... only dynamic queries
+   } else {
+       # Cache miss - query everything and save
+       # ... existing logic
+       Save-SystemInfoCache $data
+   }
+   ```
+
+3. **Add cache invalidation:**
+   - `-RefreshCache` switch parameter
+   - Delete cache file to force refresh
+
+### Expected Performance
+
+**Before (current):**
+- Total: ~5s
+- CIM queries: ~2.5s
+- Registry: ~0.5s
+- Counter: ~1s
+- Other: ~1s
+
+**After (with cache):**
+- Cache hit: ~1s total
+  - Load cache: ~0.1s
+  - Query CPU load: ~0.3s
+  - Query RAM/Disk/Processes: ~0.3s
+  - Display: ~0.3s
+- Cache miss: ~5s (same as before, but saves for next time)
+
+### Tasks
+
+- [ ] Create cache directory structure
+- [ ] Implement `Get-SystemInfoCache` function
+- [ ] Implement `Save-SystemInfoCache` function
+- [ ] Implement `Test-CacheValid` function
+- [ ] Modify `Show-SystemStats` to use cache
+- [ ] Add `-RefreshCache` parameter
+- [ ] Test cache hit performance (<1s)
+- [ ] Test cache miss performance (~5s, generates cache)
+- [ ] Test cache invalidation after 7 days
+- [ ] Document cache behavior in README
+
+---
+
+## Priority 2 - Error Handling (DO FIRST) ✅ DONE (kept for history)
 
 ### 1. CIM Queries Protection (oh-my-stats.psm1:81-116)
 - [ ] **Wrap Get-CimInstance Win32_OperatingSystem** (line 81):
