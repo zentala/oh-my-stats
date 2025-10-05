@@ -1,0 +1,15 @@
+Type,Vendor,Name,ExpectedShort,Cores,Threads,MaxClockSpeed,Notes
+Intel_i7_8th,Intel,"Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz",i7-8750H,6,12,2200,Current test system
+Intel_i5_12th,Intel,"Intel(R) Core(TM) i5-12400F CPU @ 2.50GHz",i5-12400F,6,12,2500,Alder Lake
+Intel_i9_13th,Intel,"Intel(R) Core(TM) i9-13900K CPU @ 3.00GHz",i9-13900K,24,32,3000,Raptor Lake
+Intel_i3_10th,Intel,"Intel(R) Core(TM) i3-10100 CPU @ 3.60GHz",i3-10100,4,8,3600,Budget CPU
+Intel_Xeon,Intel,"Intel(R) Xeon(R) CPU E-2288G @ 3.70GHz",Xeon E-2288G,8,16,3700,Server CPU
+AMD_Ryzen5_3600,AMD,"AMD Ryzen 5 3600 6-Core Processor",Ryzen 5 3600,6,12,3600,Zen 2
+AMD_Ryzen7_5800X,AMD,"AMD Ryzen 7 5800X 8-Core Processor",Ryzen 7 5800X,8,16,3800,Zen 3
+AMD_Ryzen9_7950X,AMD,"AMD Ryzen 9 7950X 16-Core Processor",Ryzen 9 7950X,16,32,4500,Zen 4
+AMD_Ryzen5_PRO,AMD,"AMD Ryzen 5 PRO 4650G with Radeon Graphics",Ryzen 5 PRO 4650G,6,12,3700,Business line
+AMD_Threadripper,AMD,"AMD Ryzen Threadripper 3970X 32-Core Processor",Ryzen 3970X,32,64,3700,HEDT
+Intel_Old_Core2,Intel,"Intel(R) Core(TM)2 Duo CPU E8400 @ 3.00GHz","Core2 Duo CPU E8400 @ 3.00GHz",2,2,3000,Fallback scenario
+AMD_Old_FX,AMD,"AMD FX(tm)-8350 Eight-Core Processor","FX(tm)-8350 Eight-Core",8,8,4000,Fallback scenario
+VM_Generic,Generic,"Virtual CPU @ 2.40GHz","Virtual CPU @ 2.40GHz",4,4,2400,Virtual machine
+Long_Name,Generic,"Super Long Processor Name That Exceeds Thirty Characters And Should Be Truncated","Super Long Processor Name ...",8,16,3000,Substring test

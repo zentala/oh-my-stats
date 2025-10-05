@@ -78,16 +78,43 @@ function Show-SystemStats {
     }
 
     # Get system information
-    $os = Get-CimInstance Win32_OperatingSystem
-    $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
-    $mem = Get-CimInstance Win32_PhysicalMemory
+    try {
+        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+    } catch {
+        Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
+        return
+    }
+
+    try {
+        $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+    } catch {
+        Write-Error "Cannot access CPU information: $_"
+        return
+    }
+
+    try {
+        $mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
+    } catch {
+        Write-Verbose "Cannot get RAM speed information, using default"
+        $mem = $null
+    }
 
     # CPU load
-    $cpuLoad = (Get-CimInstance Win32_Processor).LoadPercentage
-    if (-not $cpuLoad) {
-        $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 1).CounterSamples.CookedValue
+    try {
+        $cpuLoad = (Get-CimInstance Win32_Processor -ErrorAction Stop).LoadPercentage
+        if (-not $cpuLoad -or $cpuLoad -eq 0) {
+            try {
+                $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 1 -ErrorAction Stop).CounterSamples.CookedValue
+            } catch {
+                Write-Verbose "Performance counters unavailable, using 0%"
+                $cpuLoad = 0
+            }
+        }
+        $cpuLoad = [math]::Round($cpuLoad, 0)
+    } catch {
+        Write-Verbose "Cannot get CPU load, using 0%"
+        $cpuLoad = 0
     }
-    $cpuLoad = [math]::Round($cpuLoad, 0)
 
     # RAM calculations
     $ramUsed = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1024 / 1024, 1)
@@ -112,14 +139,26 @@ function Show-SystemStats {
 
     # Process and uptime
     $processCount = (Get-Process).Count
-    $uptime = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+    try {
+        $uptime = (Get-Date) - $os.LastBootUpTime
+    } catch {
+        Write-Verbose "Cannot get uptime, using 0"
+        $uptime = New-TimeSpan -Days 0 -Hours 0
+    }
     $terminalCount = (Get-Process -Name pwsh,powershell,WindowsTerminal -ErrorAction SilentlyContinue).Count
 
     # CPU details
-    $cpuName = $cpu.Name
-    $cpuCores = $cpu.NumberOfCores
-    $cpuThreads = $cpu.NumberOfLogicalProcessors
-    $cpuSpeed = [math]::Round($cpu.MaxClockSpeed / 1000, 1)
+    if ($cpu) {
+        $cpuName = $cpu.Name
+        $cpuCores = $cpu.NumberOfCores
+        $cpuThreads = $cpu.NumberOfLogicalProcessors
+        $cpuSpeed = [math]::Round($cpu.MaxClockSpeed / 1000, 1)
+    } else {
+        $cpuName = "Unknown CPU"
+        $cpuCores = 0
+        $cpuThreads = 0
+        $cpuSpeed = 0
+    }
 
     # Format CPU name
     if ($cpuName -match "Intel.*Core.*i(\d)-(\d{4,5}\w*)") {
@@ -154,11 +193,21 @@ function Show-SystemStats {
 
     # OS version detection
     if ($IsWindows -or $PSVersionTable.PSVersion.Major -lt 6) {
-        $winBuild = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuild
-        $winVer = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").DisplayVersion
+        try {
+            $winBuild = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).CurrentBuild
+            $winVer = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).DisplayVersion
+        } catch {
+            Write-Verbose "Cannot access registry, using fallback Windows detection"
+            $winBuild = "Unknown"
+            $winVer = $null
+        }
 
         # Detect Windows version by build number
-        $winMajorVersion = if ([int]$winBuild -ge 22000) { "Windows 11" } else { "Windows 10" }
+        if ($winBuild -ne "Unknown") {
+            $winMajorVersion = if ([int]$winBuild -ge 22000) { "Windows 11" } else { "Windows 10" }
+        } else {
+            $winMajorVersion = "Windows"
+        }
 
         $winEdition = $os.Caption
         if ($winEdition -match "Home") { $winEdition = "$winMajorVersion Home" }
@@ -168,7 +217,7 @@ function Show-SystemStats {
         else { $winEdition = $winMajorVersion }
 
         # Use DisplayVersion if available, otherwise use build-based version
-        if (-not $winVer) {
+        if (-not $winVer -and $winBuild -ne "Unknown") {
             if ([int]$winBuild -ge 22631) { $winVer = "23H2" }
             elseif ([int]$winBuild -ge 22621) { $winVer = "22H2" }
             elseif ([int]$winBuild -ge 22000) { $winVer = "21H2" }
@@ -177,6 +226,8 @@ function Show-SystemStats {
             elseif ([int]$winBuild -ge 19043) { $winVer = "21H1" }
             elseif ([int]$winBuild -ge 19042) { $winVer = "20H2" }
             else { $winVer = "Legacy" }
+        } elseif ($winBuild -eq "Unknown") {
+            $winVer = ""
         }
 
         $osShort = $winEdition -replace "Windows 11", "Win11" -replace "Windows 10", "Win10"

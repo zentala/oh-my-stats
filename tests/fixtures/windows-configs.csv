@@ -1,0 +1,11 @@
+Type,Build,DisplayVersion,Caption,ExpectedVersion,ExpectedEdition,ExpectedShort,Notes
+Win11_23H2_Home,22631,23H2,Microsoft Windows 11 Home,23H2,Windows 11 Home,Win11 Home,Latest Win11
+Win11_22H2_Pro,22621,22H2,Microsoft Windows 11 Pro,22H2,Windows 11 Pro,Win11 Pro,Win11 22H2
+Win11_21H2_Enterprise,22000,21H2,Microsoft Windows 11 Enterprise,21H2,Windows 11 Enterprise,Win11 Enterprise,First Win11
+Win11_24H2_Education,26100,24H2,Microsoft Windows 11 Education,24H2,Windows 11 Education,Win11 Education,Preview build
+Win10_22H2_Home,19045,22H2,Microsoft Windows 10 Home,22H2,Windows 10 Home,Win10 Home,Latest Win10
+Win10_21H2_Pro,19044,21H2,Microsoft Windows 10 Pro,21H2,Windows 10 Pro,Win10 Pro,Win10 21H2
+Win10_21H1_Enterprise,19043,21H1,Microsoft Windows 10 Enterprise,21H1,Windows 10 Enterprise,Win10 Enterprise,Win10 21H1
+Win10_20H2_Education,19042,20H2,Microsoft Windows 10 Education,20H2,Windows 10 Education,Win10 Education,Win10 20H2
+Win10_Old,18363,,Microsoft Windows 10 Pro,Legacy,Windows 10 Pro,Win10 Pro,Old build
+Win11_No_DisplayVersion,22631,,Microsoft Windows 11 Pro,23H2,Windows 11 Pro,Win11 Pro,Fallback detection
