@@ -1,0 +1,67 @@
+{
+  "version": "1.0.0",
+  "modules": {
+    "cpu": true,
+    "ram": true,
+    "disk": true,
+    "uptime": true,
+    "terminals": true,
+    "processes": true,
+    "shellModules": true
+  },
+  "display": {
+    "showHeader": true,
+    "showProgressBars": true,
+    "showPercentageColors": true,
+    "progressBarWidth": 50,
+    "compactMode": false
+  },
+  "icons": {
+    "user": "0xEDC5",
+    "computer": "0xEBA3",
+    "windows": "0xF17A",
+    "powershell": "0xF0A0A",
+    "cpu": "0xF4BC",
+    "cpuChip": "0xEC19",
+    "ram": "0xEFC5",
+    "ramFreq": "0xEB31",
+    "disk": "0xF0A0",
+    "folder": "0xEAF7",
+    "terminal": "0xF489",
+    "process": "0xF085",
+    "uptime": "0xF017"
+  },
+  "colors": {
+    "user": "Cyan",
+    "computer": "Green",
+    "os": "Blue",
+    "shell": "Yellow",
+    "cpu": "Blue",
+    "ram": "Magenta",
+    "disk": "Yellow",
+    "info": "White",
+    "details": "DarkGray",
+    "success": "Green",
+    "error": "Red",
+    "warning": "Yellow"
+  },
+  "thresholds": {
+    "cpu": {
+      "warning": 60,
+      "critical": 80
+    },
+    "ram": {
+      "warning": 60,
+      "critical": 80
+    },
+    "disk": {
+      "warning": 60,
+      "critical": 80
+    }
+  },
+  "performance": {
+    "asyncModuleLoading": true,
+    "cacheSystemInfo": false,
+    "cacheDuration": 5
+  }
+}

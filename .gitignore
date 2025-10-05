@@ -1,0 +1,37 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# User config
+config.local.json
+*.backup
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PowerShell
+*.ps1xml
+PSReadLineHistory.txt
+
+# Test artifacts
+tests/output/
+*.test.log
+
+# Build artifacts
+dist/
+build/
+*.zip
+*.tar.gz
+
+# Node modules (if adding JS tooling)
+node_modules/
+package-lock.json

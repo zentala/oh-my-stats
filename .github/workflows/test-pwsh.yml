@@ -1,0 +1,70 @@
+name: Test PowerShell Module
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'pwsh/**'
+      - 'config/**'
+      - '.github/workflows/test-pwsh.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'pwsh/**'
+      - 'config/**'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PowerShell
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install PowerShell (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          brew install --cask powershell
+        else
+          wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
+        fi
+
+    - name: Test Module Import
+      shell: pwsh
+      run: |
+        Import-Module ./pwsh/oh-my-stats.psd1 -ErrorAction Stop
+        Get-Module oh-my-stats
+
+    - name: Test Show-SystemStats
+      shell: pwsh
+      run: |
+        Import-Module ./pwsh/oh-my-stats.psd1
+        Show-SystemStats -NoModuleStatus
+
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+
+    - name: Run Tests
+      shell: pwsh
+      run: |
+        Invoke-Pester ./tests/pwsh/ -Output Detailed
+
+    - name: Test Config Loading
+      shell: pwsh
+      run: |
+        $config = Get-Content ./config/default.json | ConvertFrom-Json
+        Write-Host "Config version: $($config.version)"
+        if (-not $config.version) { throw "Invalid config" }
