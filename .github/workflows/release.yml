@@ -5,9 +5,66 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
+  test:
+    name: Test before release
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install PowerShell (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          brew install --cask powershell
+        else
+          wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
+        fi
+
+    - name: Test Module Import
+      shell: pwsh
+      run: |
+        Import-Module ./pwsh/oh-my-stats.psd1 -ErrorAction Stop
+        Get-Module oh-my-stats
+
+    - name: Test Show-SystemStats
+      shell: pwsh
+      run: |
+        Import-Module ./pwsh/oh-my-stats.psd1
+        Show-SystemStats -NoModuleStatus
+
+    - name: Test Config Loading
+      shell: pwsh
+      run: |
+        $config = Get-Content ./config/default.json | ConvertFrom-Json
+        Write-Host "Config version: $($config.version)"
+        if (-not $config.version) { throw "Invalid config" }
+
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck
+
+    - name: Run Pester Tests
+      shell: pwsh
+      run: |
+        Invoke-Pester ./tests/pwsh/ -Output Detailed
+
   release:
+    name: Create GitHub Release
+    needs: test
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v4
 
@@ -25,20 +82,22 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-powershell-gallery:
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup PowerShell
-      run: |
-        wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
-        sudo dpkg -i packages-microsoft-prod.deb
-        sudo apt-get update
-        sudo apt-get install -y powershell
-
-    - name: Publish to PowerShell Gallery
-      shell: pwsh
-      run: |
-        Publish-Module -Path ./pwsh -NuGetApiKey ${{ secrets.PSGALLERY_API_KEY }}
+  # Publish to PowerShell Gallery (optional - requires API key)
+  # publish-powershell-gallery:
+  #   runs-on: ubuntu-latest
+  #   needs: release
+  #   if: ${{ secrets.PSGALLERY_API_KEY != '' }}
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #
+  #   - name: Setup PowerShell
+  #     run: |
+  #       wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
+  #       sudo dpkg -i packages-microsoft-prod.deb
+  #       sudo apt-get update
+  #       sudo apt-get install -y powershell
+  #
+  #   - name: Publish to PowerShell Gallery
+  #     shell: pwsh
+  #     run: |
+  #       Publish-Module -Path ./pwsh -NuGetApiKey ${{ secrets.PSGALLERY_API_KEY }}

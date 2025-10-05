@@ -122,24 +122,64 @@ function Show-SystemStats {
     $cpuSpeed = [math]::Round($cpu.MaxClockSpeed / 1000, 1)
 
     # Format CPU name
-    if ($cpuName -match "Intel.*i(\d)-(\d{4}\w*)") {
+    if ($cpuName -match "Intel.*Core.*i(\d)-(\d{4,5}\w*)") {
+        # Intel Core i3/i5/i7/i9 (e.g., i7-8750H, i5-12400F)
         $cpuShort = "i$($matches[1])-$($matches[2])"
-    } elseif ($cpuName -match "Ryzen (\d) (\d{4}\w*)") {
+    } elseif ($cpuName -match "AMD Ryzen (\d+) (\d{4}\w*)") {
+        # AMD Ryzen (e.g., Ryzen 5 5600X, Ryzen 7 5800X3D)
         $cpuShort = "Ryzen $($matches[1]) $($matches[2])"
+    } elseif ($cpuName -match "AMD Ryzen (\d+) PRO (\d{4}\w*)") {
+        # AMD Ryzen PRO
+        $cpuShort = "Ryzen $($matches[1]) PRO $($matches[2])"
+    } elseif ($cpuName -match "Intel.*Xeon.*(\w+)-(\d{4}\w*)") {
+        # Intel Xeon (e.g., Xeon E-2288G)
+        $cpuShort = "Xeon $($matches[1])-$($matches[2])"
+    } elseif ($cpuName -match "Apple (\w+)") {
+        # Apple Silicon (e.g., M1, M2, M3)
+        $cpuShort = "Apple $($matches[1])"
     } else {
-        $cpuShort = if ($cpuName -match "Intel") { $cpuName -replace "Intel\(R\)", "Intel" } else { $cpuName }
+        # Fallback: clean up common patterns
+        $cpuShort = $cpuName -replace "Intel\(R\) Core\(TM\) ", "" `
+                              -replace "AMD ", "" `
+                              -replace "Processor", "" `
+                              -replace "\(R\)", "" `
+                              -replace "\(TM\)", "" `
+                              -replace "\s+", " "
+        $cpuShort = $cpuShort.Trim()
+        # Limit length if too long
+        if ($cpuShort.Length -gt 30) {
+            $cpuShort = $cpuShort.Substring(0, 27) + "..."
+        }
     }
 
     # OS version detection
     if ($IsWindows -or $PSVersionTable.PSVersion.Major -lt 6) {
         $winBuild = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").CurrentBuild
         $winVer = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").DisplayVersion
-        if (-not $winVer) { $winVer = "24H2" }
+
+        # Detect Windows version by build number
+        $winMajorVersion = if ([int]$winBuild -ge 22000) { "Windows 11" } else { "Windows 10" }
+
         $winEdition = $os.Caption
-        if ($winEdition -match "Home") { $winEdition = "Windows 11 Home" }
-        elseif ($winEdition -match "Pro") { $winEdition = "Windows 11 Pro" }
-        else { $winEdition = "Windows 11" }
-        $osShort = $winEdition -replace "Windows 11", "Win11"
+        if ($winEdition -match "Home") { $winEdition = "$winMajorVersion Home" }
+        elseif ($winEdition -match "Pro") { $winEdition = "$winMajorVersion Pro" }
+        elseif ($winEdition -match "Enterprise") { $winEdition = "$winMajorVersion Enterprise" }
+        elseif ($winEdition -match "Education") { $winEdition = "$winMajorVersion Education" }
+        else { $winEdition = $winMajorVersion }
+
+        # Use DisplayVersion if available, otherwise use build-based version
+        if (-not $winVer) {
+            if ([int]$winBuild -ge 22631) { $winVer = "23H2" }
+            elseif ([int]$winBuild -ge 22621) { $winVer = "22H2" }
+            elseif ([int]$winBuild -ge 22000) { $winVer = "21H2" }
+            elseif ([int]$winBuild -ge 19045) { $winVer = "22H2" }
+            elseif ([int]$winBuild -ge 19044) { $winVer = "21H2" }
+            elseif ([int]$winBuild -ge 19043) { $winVer = "21H1" }
+            elseif ([int]$winBuild -ge 19042) { $winVer = "20H2" }
+            else { $winVer = "Legacy" }
+        }
+
+        $osShort = $winEdition -replace "Windows 11", "Win11" -replace "Windows 10", "Win10"
         $osIcon = $Config.icons.windows
     } elseif ($IsMacOS) {
         $osShort = "macOS"
