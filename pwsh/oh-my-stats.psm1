@@ -131,34 +131,67 @@ function Show-SystemStats {
         Write-Host "`n`n"
     }
 
-    # Get system information
-    try {
-        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-    } catch {
-        Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
-        return
+    # Try to load cached static data (unless refresh requested)
+    $cachedData = $null
+    if (-not $RefreshCache) {
+        $cachedData = Get-SystemInfoCache
     }
 
-    try {
-        $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
-    } catch {
-        Write-Error "Cannot access CPU information: $_"
-        return
+    # Get or load static system information
+    if ($cachedData) {
+        # Use cached static data
+        $cpuName = $cachedData.CPU.Name
+        $cpuShort = $cachedData.CPU.ShortName
+        $cpuCores = $cachedData.CPU.Cores
+        $cpuThreads = $cachedData.CPU.Threads
+        $cpuSpeed = $cachedData.CPU.Speed
+        $ramTotal = $cachedData.RAM.Total
+        $memSpeed = $cachedData.RAM.Speed
+        $diskTotal = $cachedData.Disk.Total
+        $osShort = $cachedData.OS.Short
+        $winVer = $cachedData.OS.Version
+        $winEdition = $cachedData.OS.Edition
+        $osIcon = $cachedData.OS.Icon
+
+        # Still need OS object for dynamic RAM calculation
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        } catch {
+            Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
+            return
+        }
+    } else {
+        # Query all static data (cache miss or refresh)
+        try {
+            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        } catch {
+            Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
+            return
+        }
+
+        try {
+            $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+        } catch {
+            Write-Error "Cannot access CPU information: $_"
+            return
+        }
+
+        try {
+            $mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
+        } catch {
+            Write-Verbose "Cannot get RAM speed information, using default"
+            $mem = $null
+        }
     }
 
+    # CPU load (optimize for speed)
     try {
-        $mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
-    } catch {
-        Write-Verbose "Cannot get RAM speed information, using default"
-        $mem = $null
-    }
-
-    # CPU load
-    try {
+        # Try WMI first (instant, no sampling delay)
         $cpuLoad = (Get-CimInstance Win32_Processor -ErrorAction Stop).LoadPercentage
         if (-not $cpuLoad -or $cpuLoad -eq 0) {
+            # Fallback to performance counter with minimal sample interval
             try {
-                $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 1 -ErrorAction Stop).CounterSamples.CookedValue
+                $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction Stop).CounterSamples.CookedValue
             } catch {
                 Write-Verbose "Performance counters unavailable, using 0%"
                 $cpuLoad = 0
@@ -170,28 +203,36 @@ function Show-SystemStats {
         $cpuLoad = 0
     }
 
-    # RAM calculations
+    # RAM calculations (dynamic data always queried)
     $ramUsed = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1024 / 1024, 1)
-    $ramTotal = [math]::Round($os.TotalVisibleMemorySize / 1024 / 1024, 1)
+    if (-not $cachedData) {
+        $ramTotal = [math]::Round($os.TotalVisibleMemorySize / 1024 / 1024, 1)
+    }
     $ramPercent = [math]::Round(($ramUsed / $ramTotal) * 100, 0)
 
-    # Memory speed
-    $memSpeed = $mem | Select-Object -First 1 | Select-Object -ExpandProperty Speed
-    if (-not $memSpeed) { $memSpeed = "DDR4" } else { $memSpeed = "${memSpeed}MHz" }
+    # Memory speed (only if cache miss)
+    if (-not $cachedData) {
+        $memSpeed = $mem | Select-Object -First 1 | Select-Object -ExpandProperty Speed
+        if (-not $memSpeed) { $memSpeed = "DDR4" } else { $memSpeed = "${memSpeed}MHz" }
+    }
 
-    # Disk calculations
+    # Disk calculations (always query for dynamic data)
     $disk = Get-PSDrive C -ErrorAction SilentlyContinue
     if ($disk) {
         $diskUsed = [math]::Round($disk.Used / 1GB, 0)
-        $diskTotal = [math]::Round(($disk.Used + $disk.Free) / 1GB, 0)
+        if (-not $cachedData) {
+            $diskTotal = [math]::Round(($disk.Used + $disk.Free) / 1GB, 0)
+        }
         $diskPercent = [math]::Round($disk.Used / ($disk.Used + $disk.Free) * 100, 0)
     } else {
         $diskUsed = 0
-        $diskTotal = 0
+        if (-not $cachedData) {
+            $diskTotal = 0
+        }
         $diskPercent = 0
     }
 
-    # Process and uptime
+    # Process and uptime (dynamic data always queried)
     $processCount = (Get-Process).Count
     try {
         $uptime = (Get-Date) - $os.LastBootUpTime
@@ -201,100 +242,128 @@ function Show-SystemStats {
     }
     $terminalCount = (Get-Process -Name pwsh,powershell,WindowsTerminal -ErrorAction SilentlyContinue).Count
 
-    # CPU details
-    if ($cpu) {
-        $cpuName = $cpu.Name
-        $cpuCores = $cpu.NumberOfCores
-        $cpuThreads = $cpu.NumberOfLogicalProcessors
-        $cpuSpeed = [math]::Round($cpu.MaxClockSpeed / 1000, 1)
-    } else {
-        $cpuName = "Unknown CPU"
-        $cpuCores = 0
-        $cpuThreads = 0
-        $cpuSpeed = 0
-    }
-
-    # Format CPU name
-    if ($cpuName -match "Intel.*Core.*i(\d)-(\d{4,5}\w*)") {
-        # Intel Core i3/i5/i7/i9 (e.g., i7-8750H, i5-12400F)
-        $cpuShort = "i$($matches[1])-$($matches[2])"
-    } elseif ($cpuName -match "AMD Ryzen (\d+) (\d{4}\w*)") {
-        # AMD Ryzen (e.g., Ryzen 5 5600X, Ryzen 7 5800X3D)
-        $cpuShort = "Ryzen $($matches[1]) $($matches[2])"
-    } elseif ($cpuName -match "AMD Ryzen (\d+) PRO (\d{4}\w*)") {
-        # AMD Ryzen PRO
-        $cpuShort = "Ryzen $($matches[1]) PRO $($matches[2])"
-    } elseif ($cpuName -match "Intel.*Xeon.*(\w+)-(\d{4}\w*)") {
-        # Intel Xeon (e.g., Xeon E-2288G)
-        $cpuShort = "Xeon $($matches[1])-$($matches[2])"
-    } elseif ($cpuName -match "Apple (\w+)") {
-        # Apple Silicon (e.g., M1, M2, M3)
-        $cpuShort = "Apple $($matches[1])"
-    } else {
-        # Fallback: clean up common patterns
-        $cpuShort = $cpuName -replace "Intel\(R\) Core\(TM\) ", "" `
-                              -replace "AMD ", "" `
-                              -replace "Processor", "" `
-                              -replace "\(R\)", "" `
-                              -replace "\(TM\)", "" `
-                              -replace "\s+", " "
-        $cpuShort = $cpuShort.Trim()
-        # Limit length if too long
-        if ($cpuShort.Length -gt 30) {
-            $cpuShort = $cpuShort.Substring(0, 27) + "..."
-        }
-    }
-
-    # OS version detection
-    if ($IsWindows -or $PSVersionTable.PSVersion.Major -lt 6) {
-        try {
-            $winBuild = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).CurrentBuild
-            $winVer = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).DisplayVersion
-        } catch {
-            Write-Verbose "Cannot access registry, using fallback Windows detection"
-            $winBuild = "Unknown"
-            $winVer = $null
-        }
-
-        # Detect Windows version by build number
-        if ($winBuild -ne "Unknown") {
-            $winMajorVersion = if ([int]$winBuild -ge 22000) { "Windows 11" } else { "Windows 10" }
+    # Static data processing (only on cache miss)
+    if (-not $cachedData) {
+        # CPU details
+        if ($cpu) {
+            $cpuName = $cpu.Name
+            $cpuCores = $cpu.NumberOfCores
+            $cpuThreads = $cpu.NumberOfLogicalProcessors
+            $cpuSpeed = [math]::Round($cpu.MaxClockSpeed / 1000, 1)
         } else {
-            $winMajorVersion = "Windows"
+            $cpuName = "Unknown CPU"
+            $cpuCores = 0
+            $cpuThreads = 0
+            $cpuSpeed = 0
         }
 
-        $winEdition = $os.Caption
-        if ($winEdition -match "Home") { $winEdition = "$winMajorVersion Home" }
-        elseif ($winEdition -match "Pro") { $winEdition = "$winMajorVersion Pro" }
-        elseif ($winEdition -match "Enterprise") { $winEdition = "$winMajorVersion Enterprise" }
-        elseif ($winEdition -match "Education") { $winEdition = "$winMajorVersion Education" }
-        else { $winEdition = $winMajorVersion }
-
-        # Use DisplayVersion if available, otherwise use build-based version
-        if (-not $winVer -and $winBuild -ne "Unknown") {
-            if ([int]$winBuild -ge 22631) { $winVer = "23H2" }
-            elseif ([int]$winBuild -ge 22621) { $winVer = "22H2" }
-            elseif ([int]$winBuild -ge 22000) { $winVer = "21H2" }
-            elseif ([int]$winBuild -ge 19045) { $winVer = "22H2" }
-            elseif ([int]$winBuild -ge 19044) { $winVer = "21H2" }
-            elseif ([int]$winBuild -ge 19043) { $winVer = "21H1" }
-            elseif ([int]$winBuild -ge 19042) { $winVer = "20H2" }
-            else { $winVer = "Legacy" }
-        } elseif ($winBuild -eq "Unknown") {
-            $winVer = ""
+        # Format CPU name
+        if ($cpuName -match "Intel.*Core.*i(\d)-(\d{4,5}\w*)") {
+            # Intel Core i3/i5/i7/i9 (e.g., i7-8750H, i5-12400F)
+            $cpuShort = "i$($matches[1])-$($matches[2])"
+        } elseif ($cpuName -match "AMD Ryzen (\d+) (\d{4}\w*)") {
+            # AMD Ryzen (e.g., Ryzen 5 5600X, Ryzen 7 5800X3D)
+            $cpuShort = "Ryzen $($matches[1]) $($matches[2])"
+        } elseif ($cpuName -match "AMD Ryzen (\d+) PRO (\d{4}\w*)") {
+            # AMD Ryzen PRO
+            $cpuShort = "Ryzen $($matches[1]) PRO $($matches[2])"
+        } elseif ($cpuName -match "Intel.*Xeon.*(\w+)-(\d{4}\w*)") {
+            # Intel Xeon (e.g., Xeon E-2288G)
+            $cpuShort = "Xeon $($matches[1])-$($matches[2])"
+        } elseif ($cpuName -match "Apple (\w+)") {
+            # Apple Silicon (e.g., M1, M2, M3)
+            $cpuShort = "Apple $($matches[1])"
+        } else {
+            # Fallback: clean up common patterns
+            $cpuShort = $cpuName -replace "Intel\(R\) Core\(TM\) ", "" `
+                                  -replace "AMD ", "" `
+                                  -replace "Processor", "" `
+                                  -replace "\(R\)", "" `
+                                  -replace "\(TM\)", "" `
+                                  -replace "\s+", " "
+            $cpuShort = $cpuShort.Trim()
+            # Limit length if too long
+            if ($cpuShort.Length -gt 30) {
+                $cpuShort = $cpuShort.Substring(0, 27) + "..."
+            }
         }
 
-        $osShort = $winEdition -replace "Windows 11", "Win11" -replace "Windows 10", "Win10"
-        $osIcon = $Config.icons.windows
-    } elseif ($IsMacOS) {
-        $osShort = "macOS"
-        $osIcon = "0xF179"
-    } elseif ($IsLinux) {
-        $osShort = "Linux"
-        $osIcon = "0xF17C"
-    } else {
-        $osShort = "Unknown"
-        $osIcon = "0xF233"
+        # OS version detection
+        if ($IsWindows -or $PSVersionTable.PSVersion.Major -lt 6) {
+            try {
+                $winBuild = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).CurrentBuild
+                $winVer = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -ErrorAction Stop).DisplayVersion
+            } catch {
+                Write-Verbose "Cannot access registry, using fallback Windows detection"
+                $winBuild = "Unknown"
+                $winVer = $null
+            }
+
+            # Detect Windows version by build number
+            if ($winBuild -ne "Unknown") {
+                $winMajorVersion = if ([int]$winBuild -ge 22000) { "Windows 11" } else { "Windows 10" }
+            } else {
+                $winMajorVersion = "Windows"
+            }
+
+            $winEdition = $os.Caption
+            if ($winEdition -match "Home") { $winEdition = "$winMajorVersion Home" }
+            elseif ($winEdition -match "Pro") { $winEdition = "$winMajorVersion Pro" }
+            elseif ($winEdition -match "Enterprise") { $winEdition = "$winMajorVersion Enterprise" }
+            elseif ($winEdition -match "Education") { $winEdition = "$winMajorVersion Education" }
+            else { $winEdition = $winMajorVersion }
+
+            # Use DisplayVersion if available, otherwise use build-based version
+            if (-not $winVer -and $winBuild -ne "Unknown") {
+                if ([int]$winBuild -ge 22631) { $winVer = "23H2" }
+                elseif ([int]$winBuild -ge 22621) { $winVer = "22H2" }
+                elseif ([int]$winBuild -ge 22000) { $winVer = "21H2" }
+                elseif ([int]$winBuild -ge 19045) { $winVer = "22H2" }
+                elseif ([int]$winBuild -ge 19044) { $winVer = "21H2" }
+                elseif ([int]$winBuild -ge 19043) { $winVer = "21H1" }
+                elseif ([int]$winBuild -ge 19042) { $winVer = "20H2" }
+                else { $winVer = "Legacy" }
+            } elseif ($winBuild -eq "Unknown") {
+                $winVer = ""
+            }
+
+            $osShort = $winEdition -replace "Windows 11", "Win11" -replace "Windows 10", "Win10"
+            $osIcon = $Config.icons.windows
+        } elseif ($IsMacOS) {
+            $osShort = "macOS"
+            $osIcon = "0xF179"
+        } elseif ($IsLinux) {
+            $osShort = "Linux"
+            $osIcon = "0xF17C"
+        } else {
+            $osShort = "Unknown"
+            $osIcon = "0xF233"
+        }
+
+        # Save static data to cache
+        $staticData = @{
+            CPU = @{
+                Name = $cpuName
+                ShortName = $cpuShort
+                Cores = $cpuCores
+                Threads = $cpuThreads
+                Speed = $cpuSpeed
+            }
+            RAM = @{
+                Total = $ramTotal
+                Speed = $memSpeed
+            }
+            Disk = @{
+                Total = $diskTotal
+            }
+            OS = @{
+                Short = $osShort
+                Version = $winVer
+                Edition = $winEdition
+                Icon = $osIcon
+            }
+        }
+        Save-SystemInfoCache -SystemInfo $staticData
     }
 
     # Display header
