@@ -9,7 +9,7 @@
 
     RootModule = 'oh-my-stats.psm1'
 
-    FunctionsToExport = @('Show-SystemStats')
+    FunctionsToExport = @('Show-SystemStats', 'Draw-ProgressBar', 'Get-Icon')
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()

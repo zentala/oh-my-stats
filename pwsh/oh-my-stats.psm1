@@ -25,6 +25,10 @@ function Draw-ProgressBar {
         [string]$Color = "Green"
     )
 
+    # Clamp percent to 0-100 range
+    if ($Percent -lt 0) { $Percent = 0 }
+    if ($Percent -gt 100) { $Percent = 100 }
+
     $filled = [math]::Floor($Percent * $Width / 100)
     $empty = $Width - $filled
 
@@ -51,7 +55,7 @@ function Get-Icon {
     if ($code -gt 0xFFFF) {
         return [System.Char]::ConvertFromUtf32($code)
     } else {
-        return [char]$code
+        return [string][char]$code
     }
 }
 
@@ -471,4 +475,4 @@ function Show-SystemStats {
 }
 
 # Export functions
-Export-ModuleMember -Function Show-SystemStats
+Export-ModuleMember -Function Show-SystemStats, Draw-ProgressBar, Get-Icon
