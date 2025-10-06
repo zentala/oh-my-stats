@@ -40,19 +40,73 @@ Show-SystemStats
 #### Testing
 ```powershell
 # Install Pester if needed
-Install-Module Pester -Force
+Install-Module Pester -Force -SkipPublisherCheck
 
-# Run tests
+# Run all tests (68 tests)
 Invoke-Pester ./tests/pwsh/
+
+# Run specific test file
+Invoke-Pester ./tests/pwsh/cpu-detection.Tests.ps1 -Output Detailed
+
+# Run with code coverage
+Invoke-Pester ./tests/pwsh/ -CodeCoverage ./pwsh/*.psm1
 ```
+
+**Test categories:**
+- ✅ CPU detection (8 tests) - Intel, AMD, edge cases
+- ✅ Windows version detection (11 tests) - Win10/11, builds
+- ✅ Helper functions (26 tests) - Draw-ProgressBar, Get-Icon
+- ✅ Main module (23 tests) - Error handling, cache, config
 
 ## Code Style
 
 ### PowerShell
 - Follow [PowerShell Best Practices](https://github.com/PoshCode/PowerShellPracticeAndStyle)
-- Use approved verbs: `Get-`, `Show-`, `Set-`
+- Use approved verbs: `Get-`, `Show-`, `Set-`, `Test-`, `Draw-`
+- Use **PascalCase** for function names
+- Use **camelCase** for variables
+- Indent with **4 spaces** (no tabs)
+- Maximum line length: **120 characters**
 - Add comment-based help to functions
-- Keep functions under 50 lines when possible
+- Keep functions focused and under 100 lines when possible
+
+**Example:**
+```powershell
+function Show-SystemStats {
+    [CmdletBinding()]
+    param(
+        [switch]$NoModuleStatus,
+        [string]$ConfigPath
+    )
+
+    # Try to load cached static data
+    $cachedData = Get-SystemInfoCache
+
+    if ($cachedData) {
+        # Use cached static data
+        $cpuName = $cachedData.CPU.Name
+    } else {
+        # Query all data (cache miss)
+        $cpu = Get-CimInstance Win32_Processor
+    }
+}
+```
+
+### Error Handling
+- Always use `try/catch` for external calls (CIM, registry, file I/O)
+- Provide graceful fallbacks
+- Use `Write-Verbose` for debugging info
+- Use `Write-Warning` for non-critical issues
+- Use `Write-Error` for critical failures
+
+```powershell
+try {
+    $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop
+} catch {
+    Write-Error "Cannot access CPU information: $_"
+    return
+}
+```
 
 ### Shell Scripts (Bash/Zsh)
 - Use `shellcheck` for linting
