@@ -4,9 +4,11 @@
 
 A neofetch-like system information display tool that works with **PowerShell**, **Zsh**, **Bash**, and **Fish** shells. Designed to integrate seamlessly with modern terminals using Nerd Fonts.
 
-![Platform Support](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20BSD-blue)
-![Shell Support](https://img.shields.io/badge/shell-PowerShell%20%7C%20Zsh%20%7C%20Bash%20%7C%20Fish-green)
-![License](https://img.shields.io/badge/license-MIT-orange)
+[![Tests](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml)
+[![Release](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml)
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
+[![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue)](https://github.com/PowerShell/PowerShell)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/zentala/oh-my-stats)
 
 ## ✨ Features
 
