@@ -22,23 +22,7 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 
 ## 📸 Screenshots
 
-### PowerShell (Windows)
-```
-  👤  username @ 💻  HOSTNAME │ 🪟  Win11 x64 24H2 │ 󰨊  PowerShell v7.5.3
-
-  󰻠  CPU ███████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 39% [󰘚 i7-8750H @ 2.2GHz 6c/12t]
-  󰍛  RAM ███████████████████████████░░░░░░░░░░░░░░░░░░░░░░░ 55% (17.4GB/31.9GB) [󰑭 2667MHz]
-  󰋊  HDD ██████████████████████████████████░░░░░░░░░░░░░░░░ 69% (645GB/930GB) [  C:\]
-
-  [ 󰙯  19 terminals │ 󰑮  519 processes │ 󰥔  2d 18h uptime ]
-
-    [✓] Oh My Posh
-    [✓] PSReadLine
-    [✓] Aliases & History
-```
-
-### Zsh (macOS/Linux) - *Coming Soon*
-### Bash (Linux/BSD) - *Coming Soon*
+<img src="https://cdn.zentala.io/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
 
 ## 📋 Requirements
 
@@ -48,12 +32,8 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 - [Oh My Posh](https://ohmyposh.dev/) (optional)
 - [Terminal-Icons](https://github.com/devblackops/Terminal-Icons) (optional)
 
-### Zsh (macOS/Linux)
+### Zsh (*comming some day hopefully*)
 - Zsh 5.8+
-- Nerd Font installed
-
-### Bash (Linux/BSD)
-- Bash 4.0+
 - Nerd Font installed
 
 ## 🚀 Installation
