@@ -445,32 +445,6 @@ function Show-SystemStats {
         Write-Host " ]" -ForegroundColor DarkGray
     }
 
-    # Module status
-    if (-not $NoModuleStatus -and $Config.modules.shellModules) {
-        Write-Host ""
-
-        if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
-            Write-Host "    [" -NoNewline -ForegroundColor DarkGray
-            Write-Host "✓" -NoNewline -ForegroundColor $Config.colors.success
-            Write-Host "] " -NoNewline -ForegroundColor DarkGray
-            Write-Host "Oh My Posh" -ForegroundColor $Config.colors.info
-        }
-
-        if (Get-Module -Name PSReadLine) {
-            Write-Host "    [" -NoNewline -ForegroundColor DarkGray
-            Write-Host "✓" -NoNewline -ForegroundColor $Config.colors.success
-            Write-Host "] " -NoNewline -ForegroundColor DarkGray
-            Write-Host "PSReadLine" -ForegroundColor $Config.colors.info
-        }
-
-        if (Get-Module -Name Terminal-Icons) {
-            Write-Host "    [" -NoNewline -ForegroundColor DarkGray
-            Write-Host "✓" -NoNewline -ForegroundColor $Config.colors.success
-            Write-Host "] " -NoNewline -ForegroundColor DarkGray
-            Write-Host "Terminal-Icons" -ForegroundColor $Config.colors.info
-        }
-    }
-
     Write-Host ""
 }
 
