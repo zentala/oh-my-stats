@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Test-Path $PROFILE)",
+      "Read(//c/Users/Lenovo/Documents/PowerShell/**)",
+      "Bash(winget install:*)",
+      "Bash(pwsh:*)",
+      "Bash(where cat)",
+      "Bash(echo $SHELL)",
+      "Bash(echo $PATH)",
+      "Read(//c/Users/Lenovo/**)",
+      "Bash(bash:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git tag:*)",
+      "Bash(git -C C:codeoh-my-stats status)",
+      "Bash(git log:*)",
+      "Bash(gh run list:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
