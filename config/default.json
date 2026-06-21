@@ -14,7 +14,8 @@
     "showProgressBars": true,
     "showPercentageColors": true,
     "progressBarWidth": 50,
-    "compactMode": false
+    "compactMode": false,
+    "nerdFonts": false
   },
   "icons": {
     "user": "0xEDC5",
