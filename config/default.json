@@ -21,6 +21,8 @@
     "user": "0xEDC5",
     "computer": "0xEBA3",
     "windows": "0xF17A",
+    "macos": "0xF179",
+    "linux": "0xF17C",
     "powershell": "0xF0A0A",
     "cpu": "0xF4BC",
     "cpuChip": "0xEC19",
@@ -31,6 +33,23 @@
     "terminal": "0xF489",
     "process": "0xF085",
     "uptime": "0xF017"
+  },
+  "unicodeIcons": {
+    "user": "●",
+    "computer": "◆",
+    "windows": "▪",
+    "macos": "◆",
+    "linux": "◆",
+    "powershell": "▶",
+    "cpu": "⚡",
+    "cpuChip": "◈",
+    "ram": "≡",
+    "ramFreq": "~",
+    "disk": "◉",
+    "folder": "▸",
+    "terminal": "▶",
+    "process": "⚙",
+    "uptime": "◑"
   },
   "colors": {
     "user": "Cyan",
