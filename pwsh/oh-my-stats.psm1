@@ -415,49 +415,56 @@ function Show-SystemStats {
 
     # Display header
     Write-Host ""
-    Write-Host "  $($icons.user) " -NoNewline -ForegroundColor $Config.colors.user
+    Write-Host "  " -NoNewline
+    if ($icons.user) { Write-Host "$($icons.user) " -NoNewline -ForegroundColor $Config.colors.user }
     Write-Host "$env:USERNAME " -NoNewline -ForegroundColor $Config.colors.user
     Write-Host "@ " -NoNewline -ForegroundColor DarkGray
-    Write-Host "$($icons.computer) " -NoNewline -ForegroundColor $Config.colors.computer
+    if ($icons.computer) { Write-Host "$($icons.computer) " -NoNewline -ForegroundColor $Config.colors.computer }
     Write-Host "$env:COMPUTERNAME " -NoNewline -ForegroundColor $Config.colors.computer
-    Write-Host "│ " -NoNewline -ForegroundColor DarkGray
-    Write-Host "$($icons.os) " -NoNewline -ForegroundColor $Config.colors.os
+    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    if ($icons.os) { Write-Host "$($icons.os) " -NoNewline -ForegroundColor $Config.colors.os }
     Write-Host "$osShort x64 $winVer " -NoNewline -ForegroundColor $Config.colors.os
-    Write-Host "│ " -NoNewline -ForegroundColor DarkGray
-    Write-Host "$($icons.powershell) " -NoNewline -ForegroundColor $Config.colors.shell
+    Write-Host " │ " -NoNewline -ForegroundColor DarkGray
+    if ($icons.powershell) { Write-Host "$($icons.powershell) " -NoNewline -ForegroundColor $Config.colors.shell }
     Write-Host "PowerShell v$($PSVersionTable.PSVersion)" -ForegroundColor $Config.colors.shell
     Write-Host ""
 
     # CPU display
     if ($Config.modules.cpu) {
-        Write-Host "  $($icons.cpu) " -NoNewline -ForegroundColor $Config.colors.cpu
+        Write-Host "  " -NoNewline
+        if ($icons.cpu) { Write-Host "$($icons.cpu) " -NoNewline -ForegroundColor $Config.colors.cpu }
         Write-Host "CPU " -NoNewline -ForegroundColor $Config.colors.cpu
         Write-Host "$(Draw-ProgressBar -Percent $cpuLoad -Width $Config.display.progressBarWidth) " -NoNewline
         $cpuColor = if ($cpuLoad -ge 80) { "Red" } elseif ($cpuLoad -ge 60) { "Yellow" } else { "Green" }
         Write-Host "$($cpuLoad.ToString().PadLeft(2))% " -NoNewline -ForegroundColor $cpuColor
-        Write-Host "[$($icons.cpuChip) $cpuShort @ ${cpuSpeed}GHz ${cpuCores}c/${cpuThreads}t]" -ForegroundColor $Config.colors.details
+        $cpuDetail = if ($icons.cpuChip) { "$($icons.cpuChip) $cpuShort" } else { $cpuShort }
+        Write-Host "[$cpuDetail @ ${cpuSpeed}GHz ${cpuCores}c/${cpuThreads}t]" -ForegroundColor $Config.colors.details
     }
 
     # RAM display
     if ($Config.modules.ram) {
-        Write-Host "  $($icons.ram) " -NoNewline -ForegroundColor $Config.colors.ram
+        Write-Host "  " -NoNewline
+        if ($icons.ram) { Write-Host "$($icons.ram) " -NoNewline -ForegroundColor $Config.colors.ram }
         Write-Host "RAM " -NoNewline -ForegroundColor $Config.colors.ram
         Write-Host "$(Draw-ProgressBar -Percent $ramPercent -Width $Config.display.progressBarWidth) " -NoNewline
         $ramColor = if ($ramPercent -ge 80) { "Red" } elseif ($ramPercent -ge 60) { "Yellow" } else { "Green" }
         Write-Host "$($ramPercent.ToString().PadLeft(2))% " -NoNewline -ForegroundColor $ramColor
         Write-Host "(${ramUsed}GB/${ramTotal}GB) " -NoNewline -ForegroundColor $Config.colors.info
-        Write-Host "[$($icons.ramFreq) $memSpeed]" -ForegroundColor $Config.colors.details
+        $freqDetail = if ($icons.ramFreq) { "$($icons.ramFreq)$memSpeed" } else { $memSpeed }
+        Write-Host "[$freqDetail]" -ForegroundColor $Config.colors.details
     }
 
     # Disk display
     if ($Config.modules.disk -and $disk) {
-        Write-Host "  $($icons.disk) " -NoNewline -ForegroundColor $Config.colors.disk
+        Write-Host "  " -NoNewline
+        if ($icons.disk) { Write-Host "$($icons.disk) " -NoNewline -ForegroundColor $Config.colors.disk }
         Write-Host "HDD " -NoNewline -ForegroundColor $Config.colors.disk
         Write-Host "$(Draw-ProgressBar -Percent $diskPercent -Width $Config.display.progressBarWidth) " -NoNewline
         $diskColor = if ($diskPercent -ge 80) { "Red" } elseif ($diskPercent -ge 60) { "Yellow" } else { "Green" }
         Write-Host "$($diskPercent.ToString().PadLeft(2))% " -NoNewline -ForegroundColor $diskColor
         Write-Host "(${diskUsed}GB/${diskTotal}GB) " -NoNewline -ForegroundColor $Config.colors.info
-        Write-Host "[$($icons.folder) C:\]" -ForegroundColor $Config.colors.details
+        $folderDetail = if ($icons.folder) { "$($icons.folder) C:\" } else { "C:\" }
+        Write-Host "[$folderDetail]" -ForegroundColor $Config.colors.details
     }
 
     # Stats bar
@@ -466,19 +473,19 @@ function Show-SystemStats {
         Write-Host "  [ " -NoNewline -ForegroundColor DarkGray
 
         if ($Config.modules.terminals) {
-            Write-Host "$($icons.terminal) " -NoNewline -ForegroundColor Cyan
+            if ($icons.terminal) { Write-Host "$($icons.terminal) " -NoNewline -ForegroundColor Cyan }
             Write-Host "$terminalCount terminals" -NoNewline -ForegroundColor Cyan
         }
 
         if ($Config.modules.processes) {
             Write-Host " │ " -NoNewline -ForegroundColor DarkGray
-            Write-Host "$($icons.process) " -NoNewline -ForegroundColor Green
+            if ($icons.process) { Write-Host "$($icons.process) " -NoNewline -ForegroundColor Green }
             Write-Host "$processCount processes" -NoNewline -ForegroundColor Green
         }
 
         if ($Config.modules.uptime) {
             Write-Host " │ " -NoNewline -ForegroundColor DarkGray
-            Write-Host "$($icons.uptime) " -NoNewline -ForegroundColor Yellow
+            if ($icons.uptime) { Write-Host "$($icons.uptime) " -NoNewline -ForegroundColor Yellow }
             Write-Host "$($uptime.Days)d $($uptime.Hours)h uptime" -NoNewline -ForegroundColor Yellow
         }
 
