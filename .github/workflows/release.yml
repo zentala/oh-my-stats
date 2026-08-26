@@ -63,9 +63,13 @@ jobs:
         draft: false
         prerelease: false
         generate_release_notes: true
+        # Listed one by one on purpose: `pwsh/**` also matches pwsh/README.md, and
+        # two assets cannot share a name - the second upload dies with a 404.
         files: |
-          pwsh/**
-          config/**
+          pwsh/oh-my-stats.psd1
+          pwsh/oh-my-stats.psm1
+          pwsh/install.ps1
+          config/default.json
           README.md
           LICENSE
       env:
