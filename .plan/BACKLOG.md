@@ -38,3 +38,54 @@
   `-ErrorAction SilentlyContinue` zamienia awarię w ciszę nie do odróżnienia
   od wyniku.
   (Importance: Medium, Points: 3 — zrobione)
+
+---
+
+## Wydanie v1.1.0 (2026-08-26)
+
+Kontekst: ostatni tag to `v1.0.0` (2025-10-06), od tego czasu **16 commitów**, w tym
+dwa wydania funkcjonalne (fallback ikon Unicode, tryb bez Nerd Fontów) i dwa
+wydajnościowe (`4bd372a`, `830b5e8`). `.github/workflows/release.yml` odpala się na
+tagu `v*`: przechodzi testy na Windows/Linux/macOS, potem `softprops/action-gh-release`
+tworzy wydanie z automatycznymi notatkami. Czyli wydanie = bump wersji + tag, reszta
+dzieje się sama. Kolejność jest ważna: **testy wydajnościowe PRZED tagiem**, bo inaczej
+wydajemy poprawkę, której nic nie pilnuje.
+
+- [ ] **Testy wydajnościowe zanim pójdzie tag** — dziś 68 testów Pester sprawdza, co
+  moduł *wypisuje*, i ani jeden nie sprawdza, ile to *kosztuje*. Regresja z 280 ms z
+  powrotem do 1,7 s przeszłaby przez CI na zielono.
+  Asercja na milisekundy w CI jest krucha (runner GitHuba bywa dwa razy wolniejszy niż
+  ta maszyna), więc test ma pilnować **zachowania, które gwarantuje wydajność**, a nie
+  stopera. Mock `Get-CimInstance`/`Get-Process` w Pesterze i `Should -Invoke`:
+  - `Show-SystemStats` **nigdy** nie pyta o `Win32_Processor` z `LoadPercentage`
+    (to była ta jedna właściwość za ~1050 ms);
+  - każde `Get-CimInstance` leci z `-Property` — zapytanie o całą klasę WMI kosztuje
+    rząd wielkości więcej;
+  - `Get-Process` wywołany **dokładnie raz**, nie dwa (`Should -Invoke -Times 1 -Exactly`);
+  - `Get-PSDrive` nie wywołany w ogóle (jest `[System.IO.DriveInfo]`);
+  - `Get-CpuLoadPercent` przy wyjątku z licznika zwraca `$null`, **nie `0`** — to jest
+    test na „cisza nie znaczy sukces", pułapka opisana wyżej w tym pliku.
+  Dodatkowo jeden test-stoper z górnym limitem (np. < 1500 ms przy trafieniu w cache)
+  oznaczony `-Tag Performance` i **wyłączony z CI** — do ręcznego odpalenia na tej
+  maszynie, żeby nie wywalał builda na wolnym runnerze.
+  Plik: `tests/pwsh/performance.Tests.ps1`. (Importance: High, Points: 5)
+
+- [ ] **Wydać v1.1.0** — po powyższym. Wersja *minor*, nie *patch*: doszły funkcje
+  (fallback ikon), nic nie zostało zepsute. Do zrobienia:
+  1. `ModuleVersion` w `pwsh/oh-my-stats.psd1` → `1.1.0`;
+  2. `version` w `config/default.json` → `1.1.0` (dziś oba trzymają `1.0.0` niezależnie
+     od siebie — **sprawdzić, czy jakiś test pilnuje ich zgodności; jeśli nie, dopisać**,
+     bo rozjazd tych dwóch liczb jest niewidoczny do momentu, aż ktoś zgłosi bug z
+     „wersją 1.0.0" na kodzie 1.1.0);
+  3. `CHANGELOG.md` — sekcja `[Unreleased]` mówi dziś tylko „Updated documentation",
+     a naprawdę doszły: fallback ikon Unicode, tryb bez Nerd Fontów, czysty nagłówek,
+     projekcja właściwości CIM, `Get-CpuLoadPercent`, `[System.IO.DriveInfo]`, jeden
+     `Get-Process`. Sekcja `### Performance`: **1458–1763 ms → ~280 ms**;
+  4. `git tag v1.1.0 && git push origin v1.1.0` — dalej robi CI.
+  (Importance: Medium, Points: 2)
+
+- [ ] **Zdecydować, czy publikujemy do PowerShell Gallery** — blok
+  `publish-powershell-gallery` w `release.yml` jest zakomentowany i czeka na sekret
+  `PSGALLERY_API_KEY`. Dopóki jest zakomentowany, „wydanie" znaczy tylko wpis na
+  GitHubie: instalacja to `git clone`, nie `Install-Module`. Decyzja Pawła — jeśli tak,
+  klucz idzie przez `password-broker`, nigdy do pliku. (Importance: Low, Points: 3)
