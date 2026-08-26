@@ -82,22 +82,38 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish to PowerShell Gallery (optional - requires API key)
-  # publish-powershell-gallery:
-  #   runs-on: ubuntu-latest
-  #   needs: release
-  #   if: ${{ secrets.PSGALLERY_API_KEY != '' }}
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #
-  #   - name: Setup PowerShell
-  #     run: |
-  #       wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
-  #       sudo dpkg -i packages-microsoft-prod.deb
-  #       sudo apt-get update
-  #       sudo apt-get install -y powershell
-  #
-  #   - name: Publish to PowerShell Gallery
-  #     shell: pwsh
-  #     run: |
-  #       Publish-Module -Path ./pwsh -NuGetApiKey ${{ secrets.PSGALLERY_API_KEY }}
+  publish-powershell-gallery:
+    name: Publish to PowerShell Gallery
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Stage module for publishing
+      shell: pwsh
+      run: |
+        # The Gallery requires the folder name to match the module name, and an
+        # installed module has no ../config - it carries its own copy instead.
+        $stage = Join-Path $env:RUNNER_TEMP 'oh-my-stats'
+        New-Item -ItemType Directory -Path "$stage/config" -Force | Out-Null
+        Copy-Item ./pwsh/oh-my-stats.psd1, ./pwsh/oh-my-stats.psm1 $stage
+        Copy-Item ./config/default.json "$stage/config/"
+        Copy-Item ./LICENSE, ./README.md $stage
+        Import-Module "$stage/oh-my-stats.psd1" -Force -ErrorAction Stop
+        Write-Host "Staged oh-my-stats $((Get-Module oh-my-stats).Version)"
+
+    - name: Publish
+      shell: pwsh
+      env:
+        PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+      run: |
+        # A job-level `if` cannot read secrets, so the guard lives here. No key
+        # configured means the release still succeeds, just without the Gallery.
+        if (-not $env:PSGALLERY_API_KEY) {
+          Write-Host '::warning::PSGALLERY_API_KEY is not set - skipping the PowerShell Gallery publish.'
+          exit 0
+        }
+        Publish-Module -Path (Join-Path $env:RUNNER_TEMP 'oh-my-stats') `
+                       -NuGetApiKey $env:PSGALLERY_API_KEY `
+                       -Verbose

@@ -7,8 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-26
+
+### Added
+- **Works without Nerd Fonts** - `display.nerdFonts` config flag, default `false`
+  - `false` renders a Unicode icon set that any terminal font can draw
+  - `true` renders the Nerd Font glyphs as before
+  - Setting `$global:OhMyPwsh_UseNerdFonts = $true` overrides the config, so
+    oh-my-pwsh and oh-my-stats switch icons on together
+- **Icon-free mode** - an empty icon string now renders no icon and no gap,
+  so a config can strip icons entirely without leaving ghost spaces
+- **Performance regression tests** (`tests/pwsh/performance.Tests.ps1`, 25 tests)
+  - Assert the behaviour behind the cache: a warm cache skips `Win32_PhysicalMemory`,
+    the Windows version registry key, and one of the two `Win32_Processor` calls
+  - Cache lifecycle: written cold, untouched warm, rewritten by `-RefreshCache`,
+    rebuilt when stale, and a corrupt file no longer matters
+  - Stopwatch test, skipped when `$env:CI` is set, prints cold vs warm timings
+- **CI/CD workflows** - test matrix across Windows, Linux and macOS; release
+  pipeline on tag push; status badges in the README
+
 ### Changed
-- Updated documentation with comprehensive guides
+- Icons are precomputed once per run instead of being resolved per line
+- The header renders as plain text; only the stat rows carry a prefix icon
+- Removed the PowerShell module status display
+
+### Fixed
+- Ghost spaces where an icon string was empty
+- CPU icon rendering as a wide glyph that broke row alignment
 
 ## [1.0.0] - 2025-10-06
 

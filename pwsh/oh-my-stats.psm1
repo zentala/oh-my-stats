@@ -15,7 +15,12 @@ $script:ConfigPath = if ($env:XDG_CONFIG_HOME) {
 $script:OsProperties  = @('TotalVisibleMemorySize', 'FreePhysicalMemory', 'LastBootUpTime', 'Caption')
 $script:CpuProperties = @('Name', 'NumberOfCores', 'NumberOfLogicalProcessors', 'MaxClockSpeed')
 
-$script:DefaultConfigPath = Join-Path $PSScriptRoot "../config/default.json"
+# Two layouts: the repo keeps config/ beside pwsh/, a published package keeps it
+# inside the module folder.
+$script:DefaultConfigPath = @(
+    (Join-Path $PSScriptRoot "../config/default.json")
+    (Join-Path $PSScriptRoot "config/default.json")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
 $script:Config = if (Test-Path $ConfigPath) {
     Get-Content $ConfigPath | ConvertFrom-Json
 } else {
