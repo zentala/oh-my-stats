@@ -48,7 +48,7 @@ Describe 'CPU Detection from Fixtures' {
         }
     }
 
-    Context 'CPU Specs Extraction' {
+    Context 'CPU Specs Extraction' -Skip:(-not $IsWindows) {
         It 'Should extract cores and threads correctly' {
             Mock Get-CimInstance {
                 [PSCustomObject]@{

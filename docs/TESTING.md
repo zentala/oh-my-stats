@@ -67,7 +67,8 @@ The assertion is relative (warm beats cold), not an absolute threshold — thres
 depend on the machine and turn into flaky tests.
 
 ### 4. Cross-Platform Tests (CI/CD)
-**Platforms tested:**
+**Platforms tested** (Linux and macOS only check that the module parses, imports and
+reads its config - see the matrix below):
 - Windows (latest)
 - Ubuntu Linux (latest)
 - macOS (latest)
@@ -76,13 +77,18 @@ depend on the machine and turn into flaky tests.
 
 ## Test Matrix
 
+**The module itself is Windows-only.** It reads WMI/CIM, the Windows version registry
+key and the `C:` drive; there is no Linux or macOS implementation. The other two runners
+prove the module parses, imports and loads its config on PowerShell 7 - nothing more.
+Every test that touches system data is marked `-Skip:(-not $IsWindows)`.
+
 | Test Type | Windows | Linux | macOS | Frequency |
 |-----------|---------|-------|-------|-----------|
-| Unit Tests | ✅ | ✅ | ✅ | Every PR |
+| Unit Tests (config, helpers, CPU name parsing) | ✅ | ✅ | ✅ | Every PR |
+| Unit Tests (WMI, registry, disk, cache) | ✅ | skipped | skipped | Every PR |
 | Performance (cache + query cost) | ✅ | — | — | Every PR |
-| Integration | ✅ | ✅ | ✅ | Every PR |
 | Module Import | ✅ | ✅ | ✅ | Every commit |
-| Show-SystemStats | ✅ | ✅ | ✅ | Every commit |
+| Show-SystemStats | ✅ | — | — | Every commit |
 | Config Loading | ✅ | ✅ | ✅ | Every commit |
 
 ## CPU Vendor Test Cases
@@ -236,8 +242,6 @@ Describe 'Full System Test' {
 | Platform | Target | Cold (cache miss) | Warm (cache hit) |
 |----------|--------|-------------------|------------------|
 | Windows | < 300ms | ~194ms | ~172ms |
-| macOS | < 300ms | TBD | TBD |
-| Linux | < 300ms | TBD | TBD |
 
 Measured on an i7-14700 by the stopwatch test in `performance.Tests.ps1`. Run it
 yourself rather than trusting the table — the numbers are machine-specific.

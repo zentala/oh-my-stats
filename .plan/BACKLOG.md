@@ -107,3 +107,46 @@ wydajemy poprawkę, której nic nie pilnuje.
   moduł do katalogu `oh-my-stats/`. Do tego moduł nie dawał się zainstalować samodzielnie:
   szukał configu w `$PSScriptRoot/../config/`, którego w zainstalowanej paczce nie ma —
   teraz sprawdza obie ścieżki, a paczka niesie własną kopię `config/default.json`.
+
+---
+
+## CI było czerwone na `main` (naprawione 2026-08-26)
+
+Znalezione przy wydawaniu v1.1.0: tag nie mógł nic wydać, bo `release.yml` ma
+`needs: test`, a job testowy padał. Cztery niezależne przyczyny, wszystkie
+naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wrócą.
+
+- [x] **Testy Windows-only leciały na Linuksie i macOS** (15 porażek) — Pester
+  `Mock Get-CimInstance` wywala się na `CommandNotFoundException`, bo mock
+  wymaga, żeby komenda istniała. Prawdziwy fakt pod spodem: **ten moduł jest
+  wyłącznie windowsowy** (WMI/CIM, klucz rejestru z wersją Windows, dysk `C:`),
+  a matryca CI i `docs/TESTING.md` twierdziły inaczej. Fix: `-Skip:(-not $IsWindows)`
+  na każdym kontekście dotykającym danych systemowych, krok `Test Show-SystemStats`
+  tylko na Windows, tabela w `docs/TESTING.md` poprawiona.
+  (Importance: High, Points: 3)
+- [x] **`brew install --cask powershell` nie istnieje** — `Cask 'powershell' is
+  unavailable`. Został tylko `powershell@preview`. Krok był zbędny od początku:
+  PowerShell jest preinstalowany na każdym runnerze GitHuba. Usunięty z trzech
+  workflowów razem z apt-owym odpowiednikiem dla Linuksa.
+  (Importance: High, Points: 1)
+- [x] **`Invoke-Pester` bez `-CI` kończy się kodem 0 mimo porażek** — job
+  świecił na zielono, gdy testy padały; padał dopiero krok obok. Dokładnie
+  „cisza nie znaczy sukcesu". Dopisane `-CI` w `test-pwsh.yml` i `release.yml`.
+  (Importance: High, Points: 1)
+- [x] **`EnricoMi/publish-unit-test-result-action` dostaje 403** — `Resource not
+  accessible by integration` na `/rest/checks/runs`. Domyślny `GITHUB_TOKEN` jest
+  read-only; job dostał `permissions: checks: write` + `pull-requests: write`.
+  (Importance: Medium, Points: 1)
+- [x] **PSScriptAnalyzer traktował trzy świadome decyzje jak defekty** —
+  `PSAvoidGlobalVars` (`$global:OhMyPwsh_UseNerdFonts` to uzgodniony handshake
+  z oh-my-pwsh), `PSUseApprovedVerbs` (`Draw-ProgressBar`) i `PSUseSingularNouns`
+  (`Show-SystemStats`) — dwie ostatnie to publiczne API od 1.0.0, nie do zmiany.
+  Wykluczone przez `-ExcludeRule` z komentarzem dlaczego.
+  (Importance: Medium, Points: 1)
+- [x] **Stare testy kasowały prawdziwy `~/.cache/oh-my-stats`** — kontekst
+  `Cache Functionality` liczył ścieżki z prawdziwego `$HOME` i robił na nich
+  `Remove-Item -Recurse -Force`. Przepięte na sandbox `$HOME` (ten sam wzorzec,
+  co w `performance.Tests.ps1`). Pułapka przy okazji: test `Should import without
+  errors` **re-importuje moduł**, co odtwarza jego zakres z prawdziwym `$HOME` —
+  wstrzyknięcie sandboxa musi się powtarzać w `BeforeEach`, nie tylko raz w
+  `BeforeAll`. (Importance: High, Points: 2)

@@ -11,6 +11,12 @@ jobs:
     name: Test on Windows
     runs-on: windows-latest
 
+    # The test-result publisher creates a check run, which the default read-only
+    # GITHUB_TOKEN cannot do - without this the step fails with a 403.
+    permissions:
+      checks: write
+      pull-requests: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,10 +69,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install PowerShell
-        run: |
-          brew install --cask powershell
 
       - name: Setup PowerShell
         shell: pwsh
@@ -168,7 +170,12 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          $results = Invoke-ScriptAnalyzer -Path ./pwsh/ -Recurse -Settings PSGallery
+          # PSAvoidGlobalVars  - $global:OhMyPwsh_UseNerdFonts is the handshake with
+          #                      oh-my-pwsh; it has to be global to work.
+          # PSUseApprovedVerbs  - Draw-ProgressBar is public API since 1.0.0.
+          # PSUseSingularNouns  - so is Show-SystemStats.
+          $results = Invoke-ScriptAnalyzer -Path ./pwsh/ -Recurse -Settings PSGallery `
+                                           -ExcludeRule PSAvoidGlobalVars,PSUseApprovedVerbs,PSUseSingularNouns
 
           if ($results) {
             $results | Format-Table -AutoSize

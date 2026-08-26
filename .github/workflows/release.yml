@@ -19,18 +19,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install PowerShell (Linux/macOS)
-      if: runner.os != 'Windows'
-      run: |
-        if [ "$RUNNER_OS" == "macOS" ]; then
-          brew install --cask powershell
-        else
-          wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb
-          sudo dpkg -i packages-microsoft-prod.deb
-          sudo apt-get update
-          sudo apt-get install -y powershell
-        fi
-
     - name: Test Module Import
       shell: pwsh
       run: |
@@ -38,6 +26,7 @@ jobs:
         Get-Module oh-my-stats
 
     - name: Test Show-SystemStats
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         Import-Module ./pwsh/oh-my-stats.psd1
@@ -58,7 +47,7 @@ jobs:
     - name: Run Pester Tests
       shell: pwsh
       run: |
-        Invoke-Pester ./tests/pwsh/ -Output Detailed
+        Invoke-Pester ./tests/pwsh/ -Output Detailed -CI
 
   release:
     name: Create GitHub Release

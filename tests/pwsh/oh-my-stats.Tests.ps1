@@ -1,6 +1,25 @@
+<#
+    Module tests.
+
+    Everything that reads WMI, the registry or the C: drive is Windows-only and is
+    marked as such - the module has no Linux or macOS implementation, so running those
+    tests on the other two runners asserts nothing and fails for the wrong reason.
+
+    The cache tests run against a throwaway $HOME injected into the module scope, so
+    the real ~/.cache/oh-my-stats is never read, written, or deleted.
+#>
+
 BeforeAll {
     $modulePath = Join-Path $PSScriptRoot "../../pwsh/oh-my-stats.psd1"
     Import-Module $modulePath -Force
+
+    $script:SandboxHome = Join-Path ([IO.Path]::GetTempPath()) "oh-my-stats-module-tests-$([guid]::NewGuid())"
+    & (Get-Module oh-my-stats) { param($SandboxHome) $script:HOME = $SandboxHome } $script:SandboxHome
+}
+
+AfterAll {
+    Remove-Item $script:SandboxHome -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Module oh-my-stats -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'oh-my-stats Module' {
@@ -20,7 +39,7 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Show-SystemStats Function' {
+    Context 'Show-SystemStats Function' -Skip:(-not $IsWindows) {
         It 'Should execute without errors' {
             { Show-SystemStats -NoModuleStatus } | Should -Not -Throw
         }
@@ -74,12 +93,12 @@ Describe 'oh-my-stats Module' {
             $IsWindows -or $IsMacOS -or $IsLinux | Should -Be $true
         }
 
-        It 'Should work on current platform' {
+        It 'Should work on current platform' -Skip:(-not $IsWindows) {
             { Show-SystemStats -NoModuleStatus } | Should -Not -Throw
         }
     }
 
-    Context 'Error Handling - WMI/CIM Failures' {
+    Context 'Error Handling - WMI/CIM Failures' -Skip:(-not $IsWindows) {
         It 'Should handle Win32_OperatingSystem query failure gracefully' {
             Mock Get-CimInstance {
                 throw "WMI service not available"
@@ -133,7 +152,7 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Error Handling - Registry Access' {
+    Context 'Error Handling - Registry Access' -Skip:(-not $IsWindows) {
         It 'Should handle registry access denial gracefully' {
             Mock Get-ItemProperty {
                 throw "Access denied to registry"
@@ -144,7 +163,7 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Error Handling - Disk Access' {
+    Context 'Error Handling - Disk Access' -Skip:(-not $IsWindows) {
         It 'Should handle C: drive inaccessible' {
             Mock Get-PSDrive {
                 throw "Drive not accessible"
@@ -155,7 +174,7 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Error Handling - Performance Counters' {
+    Context 'Error Handling - Performance Counters' -Skip:(-not $IsWindows) {
         It 'Should handle Get-Counter failure gracefully' {
             Mock Get-Counter {
                 throw "Performance counters not available"
@@ -166,7 +185,7 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Error Handling - Process Enumeration' {
+    Context 'Error Handling - Process Enumeration' -Skip:(-not $IsWindows) {
         It 'Should handle Get-Process failure' {
             Mock Get-Process {
                 throw "Cannot enumerate processes"
@@ -177,10 +196,15 @@ Describe 'oh-my-stats Module' {
         }
     }
 
-    Context 'Cache Functionality' {
+    Context 'Cache Functionality' -Skip:(-not $IsWindows) {
         BeforeEach {
+            # 'Should import without errors' re-imports the module, which builds a fresh
+            # module scope carrying the real $HOME again - re-point it at the sandbox
+            # before every cache test, or these tests write to the user's own cache.
+            & (Get-Module oh-my-stats) { param($SandboxHome) $script:HOME = $SandboxHome } $script:SandboxHome
+
             # Clean cache before each test
-            $cacheDir = Join-Path $HOME ".cache/oh-my-stats"
+            $cacheDir = Join-Path $script:SandboxHome ".cache/oh-my-stats"
             if (Test-Path $cacheDir) {
                 Remove-Item $cacheDir -Recurse -Force
             }
@@ -189,7 +213,7 @@ Describe 'oh-my-stats Module' {
         It 'Should create cache on first run' {
             Show-SystemStats -NoModuleStatus | Out-Null
 
-            $cacheFile = Join-Path $HOME ".cache/oh-my-stats/system-info.json"
+            $cacheFile = Join-Path $script:SandboxHome ".cache/oh-my-stats/system-info.json"
             Test-Path $cacheFile | Should -Be $true
         }
 
@@ -197,7 +221,7 @@ Describe 'oh-my-stats Module' {
             # First run creates cache
             Show-SystemStats -NoModuleStatus | Out-Null
 
-            $cacheFile = Join-Path $HOME ".cache/oh-my-stats/system-info.json"
+            $cacheFile = Join-Path $script:SandboxHome ".cache/oh-my-stats/system-info.json"
             $cacheTime1 = (Get-Item $cacheFile).LastWriteTime
 
             Start-Sleep -Milliseconds 100
@@ -214,7 +238,7 @@ Describe 'oh-my-stats Module' {
             # First run creates cache
             Show-SystemStats -NoModuleStatus | Out-Null
 
-            $cacheFile = Join-Path $HOME ".cache/oh-my-stats/system-info.json"
+            $cacheFile = Join-Path $script:SandboxHome ".cache/oh-my-stats/system-info.json"
             $cacheTime1 = (Get-Item $cacheFile).LastWriteTime
 
             Start-Sleep -Milliseconds 100
@@ -230,7 +254,7 @@ Describe 'oh-my-stats Module' {
         It 'Should have valid cache JSON structure' {
             Show-SystemStats -NoModuleStatus | Out-Null
 
-            $cacheFile = Join-Path $HOME ".cache/oh-my-stats/system-info.json"
+            $cacheFile = Join-Path $script:SandboxHome ".cache/oh-my-stats/system-info.json"
             $cache = Get-Content $cacheFile | ConvertFrom-Json
 
             $cache.CPU | Should -Not -BeNullOrEmpty
