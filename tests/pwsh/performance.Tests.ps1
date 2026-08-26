@@ -306,3 +306,93 @@ Describe 'Stopwatch' -Tag 'Performance' -Skip:([bool]$env:CI -or -not $IsWindows
         $warm | Should -BeLessThan $cold
     }
 }
+
+Describe 'The queries that cost the most never run' -Skip:(-not $IsWindows) {
+
+    # Each assertion here guards one measured fix from the 1458-1763ms -> ~190ms work
+    # (see .plan/BACKLOG.md). They are behaviour tests, not timings: a regression puts the
+    # expensive call back, and the call is what is asserted.
+
+    BeforeEach {
+        Reset-Cache
+
+        Mock Get-CimInstance -ModuleName oh-my-stats -ParameterFilter { $ClassName -eq 'Win32_OperatingSystem' } -MockWith {
+            [PSCustomObject]@{
+                TotalVisibleMemorySize = 16777216
+                FreePhysicalMemory     = 8388608
+                LastBootUpTime         = (Get-Date).AddDays(-2)
+                Caption                = 'Microsoft Windows 11 Pro'
+            }
+        }
+        Mock Get-CimInstance -ModuleName oh-my-stats -ParameterFilter { $ClassName -eq 'Win32_Processor' } -MockWith {
+            [PSCustomObject]@{
+                Name                      = 'Intel(R) Core(TM) i7-14700 CPU @ 2.10GHz'
+                NumberOfCores             = 20
+                NumberOfLogicalProcessors = 28
+                MaxClockSpeed             = 2100
+                LoadPercentage            = 15
+            }
+        }
+        Mock Get-CimInstance -ModuleName oh-my-stats -ParameterFilter { $ClassName -eq 'Win32_PhysicalMemory' } -MockWith {
+            [PSCustomObject]@{ Speed = 4200 }
+        }
+        Mock Get-ItemProperty -ModuleName oh-my-stats -ParameterFilter { $Path -like '*Windows NT\CurrentVersion*' } -MockWith {
+            [PSCustomObject]@{ CurrentBuild = '22631'; DisplayVersion = '23H2' }
+        }
+        Mock Get-Process -ModuleName oh-my-stats -MockWith {
+            1..3 | ForEach-Object { [PSCustomObject]@{ Name = 'pwsh' } }
+        }
+        Mock Get-PSDrive -ModuleName oh-my-stats -MockWith {
+            [PSCustomObject]@{ Name = 'C'; Used = 1; Free = 1 }
+        }
+    }
+
+    It 'Should never ask Win32_Processor for LoadPercentage' {
+        # WMI samples the CPU inside the provider to answer this one property: ~1050ms.
+        # Get-CpuLoadPercent replaced it; mocked here so the fallback branch cannot fire
+        # on a runner with broken performance counters.
+        Mock Get-CpuLoadPercent -ModuleName oh-my-stats -MockWith { 15 }
+
+        Show-SystemStats -NoModuleStatus | Out-Null
+
+        Should -Invoke Get-CimInstance -ModuleName oh-my-stats -Times 0 -Exactly `
+            -ParameterFilter { $Property -contains 'LoadPercentage' }
+    }
+
+    It 'Should project properties on every CIM query' {
+        # Asking for a whole WMI class costs an order of magnitude more than asking for
+        # the handful of properties actually read.
+        Show-SystemStats -NoModuleStatus | Out-Null
+
+        Should -Invoke Get-CimInstance -ModuleName oh-my-stats -Times 0 -Exactly `
+            -ParameterFilter { -not $Property }
+    }
+
+    It 'Should enumerate processes exactly once' {
+        # Get-Process walks every process on the box; the terminal count and the process
+        # count come from one snapshot.
+        Show-SystemStats -NoModuleStatus | Out-Null
+
+        Should -Invoke Get-Process -ModuleName oh-my-stats -Times 1 -Exactly
+    }
+
+    It 'Should not touch Get-PSDrive' {
+        # The provider call walks every PowerShell drive. [System.IO.DriveInfo] reads one.
+        Show-SystemStats -NoModuleStatus | Out-Null
+
+        Should -Invoke Get-PSDrive -ModuleName oh-my-stats -Times 0 -Exactly
+    }
+
+    It 'Should report no CPU reading as $null, never as 0' {
+        # Silence must not look like an idle CPU: a broken counter has to be tellable from
+        # a genuine 0%.
+        Mock Get-CimInstance -ModuleName oh-my-stats -ParameterFilter { $ClassName -eq 'Win32_PerfRawData_PerfOS_Processor' } -MockWith {
+            throw 'Internal performance counter API call failed'
+        }
+
+        $load = & (Get-Module oh-my-stats) { Get-CpuLoadPercent -SampleIntervalMs 1 }
+
+        $load | Should -BeNullOrEmpty
+        $load | Should -Not -Be 0
+    }
+}

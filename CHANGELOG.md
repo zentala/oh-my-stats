@@ -17,9 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     oh-my-pwsh and oh-my-stats switch icons on together
 - **Icon-free mode** - an empty icon string now renders no icon and no gap,
   so a config can strip icons entirely without leaving ghost spaces
-- **Performance regression tests** (`tests/pwsh/performance.Tests.ps1`, 25 tests)
+- **Performance regression tests** (`tests/pwsh/performance.Tests.ps1`, 30 tests)
   - Assert the behaviour behind the cache: a warm cache skips `Win32_PhysicalMemory`,
     the Windows version registry key, and one of the two `Win32_Processor` calls
+  - Guard each measured fix below: no `LoadPercentage` query, `-Property` on every
+    CIM call, one `Get-Process` call, no `Get-PSDrive`, and an unreadable counter
+    reported as `$null` rather than 0%
   - Cache lifecycle: written cold, untouched warm, rewritten by `-RefreshCache`,
     rebuilt when stale, and a corrupt file no longer matters
   - Stopwatch test, skipped when `$env:CI` is set, prints cold vs warm timings
@@ -30,6 +33,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Icons are precomputed once per run instead of being resolved per line
 - The header renders as plain text; only the stat rows carry a prefix icon
 - Removed the PowerShell module status display
+
+### Performance
+- **`Show-SystemStats` runs in ~190ms, down from 1458-1763ms** on the startup path
+  - `Win32_Processor.LoadPercentage` cost ~1050ms on its own - WMI samples the CPU
+    inside the provider to answer it. `Get-CpuLoadPercent` now reads two raw
+    `Win32_PerfRawData_PerfOS_Processor` samples instead, and returns `$null` when the
+    counter cannot be read so a broken counter is not mistaken for an idle CPU
+  - `-Property` on every `Get-CimInstance`: asking for a whole WMI class costs an order
+    of magnitude more than asking for the four properties actually read (~450ms -> ~33ms
+    for `Win32_OperatingSystem`)
+  - Disk usage reads `[System.IO.DriveInfo]` instead of `Get-PSDrive`, which walks every
+    PowerShell drive
+  - One `Get-Process` snapshot, counted twice, instead of two full enumerations
 
 ### Fixed
 - Ghost spaces where an icon string was empty

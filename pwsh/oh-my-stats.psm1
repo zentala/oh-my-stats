@@ -240,7 +240,7 @@ function Show-SystemStats {
         }
 
         try {
-            $mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop
+            $mem = Get-CimInstance Win32_PhysicalMemory -Property Speed -ErrorAction Stop
         } catch {
             Write-Verbose "Cannot get RAM speed information, using default"
             $mem = $null

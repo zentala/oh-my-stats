@@ -42,6 +42,18 @@ Describe 'oh-my-stats Module' {
             $config.version | Should -Not -BeNullOrEmpty
         }
 
+        It 'Should keep the config version in step with the module manifest' {
+            # The two numbers are maintained independently, so a release that bumps one and
+            # forgets the other stays invisible until someone reports a bug against the
+            # wrong version.
+            $configPath = Join-Path $PSScriptRoot "../../config/default.json"
+            $manifestPath = Join-Path $PSScriptRoot "../../pwsh/oh-my-stats.psd1"
+            $config = Get-Content $configPath | ConvertFrom-Json
+            $manifest = Import-PowerShellDataFile $manifestPath
+
+            $config.version | Should -Be $manifest.ModuleVersion
+        }
+
         It 'Should have all required config sections' {
             $configPath = Join-Path $PSScriptRoot "../../config/default.json"
             $config = Get-Content $configPath | ConvertFrom-Json

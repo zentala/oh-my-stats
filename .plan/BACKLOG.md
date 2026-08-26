@@ -51,7 +51,7 @@ tworzy wydanie z automatycznymi notatkami. Czyli wydanie = bump wersji + tag, re
 dzieje się sama. Kolejność jest ważna: **testy wydajnościowe PRZED tagiem**, bo inaczej
 wydajemy poprawkę, której nic nie pilnuje.
 
-- [ ] **Testy wydajnościowe zanim pójdzie tag** — dziś 68 testów Pester sprawdza, co
+- [x] **Testy wydajnościowe zanim pójdzie tag** — dziś 68 testów Pester sprawdza, co
   moduł *wypisuje*, i ani jeden nie sprawdza, ile to *kosztuje*. Regresja z 280 ms z
   powrotem do 1,7 s przeszłaby przez CI na zielono.
   Asercja na milisekundy w CI jest krucha (runner GitHuba bywa dwa razy wolniejszy niż
@@ -68,9 +68,18 @@ wydajemy poprawkę, której nic nie pilnuje.
   Dodatkowo jeden test-stoper z górnym limitem (np. < 1500 ms przy trafieniu w cache)
   oznaczony `-Tag Performance` i **wyłączony z CI** — do ręcznego odpalenia na tej
   maszynie, żeby nie wywalał builda na wolnym runnerze.
-  Plik: `tests/pwsh/performance.Tests.ps1`. (Importance: High, Points: 5)
+  Plik: `tests/pwsh/performance.Tests.ps1`. (Importance: High, Points: 5 — zrobione
+  2026-08-26, 30 testów.) Wszystkie asercje z listy powyżej są w pliku. Dodatkowo:
+  prymitywy cache'u (`Test-CacheValid`, `Get-SystemInfoCache`, `Save-SystemInfoCache`)
+  i cykl życia cache'u przez `Show-SystemStats`. Stoper siedzi w `Describe`
+  `-Tag Performance`, wyłączonym gdy `$env:CI` jest ustawione, i **nie ma górnego
+  limitu w ms** — asercja jest względna (ciepły < zimny), bo próg w milisekundach
+  jest zależny od maszyny i zamienia się we flaka. Test `$HOME` jest podmieniany
+  w zasięgu modułu, więc prawdziwy `~/.cache/oh-my-stats` nie jest ruszany.
+  Przy pisaniu wyszło, że `Win32_PhysicalMemory` jako jedyne `Get-CimInstance` szło
+  bez `-Property` — dopisane (`-Property Speed`).
 
-- [ ] **Wydać v1.1.0** — po powyższym. Wersja *minor*, nie *patch*: doszły funkcje
+- [x] **Wydać v1.1.0** — po powyższym. Wersja *minor*, nie *patch*: doszły funkcje
   (fallback ikon), nic nie zostało zepsute. Do zrobienia:
   1. `ModuleVersion` w `pwsh/oh-my-stats.psd1` → `1.1.0`;
   2. `version` w `config/default.json` → `1.1.0` (dziś oba trzymają `1.0.0` niezależnie
@@ -82,10 +91,19 @@ wydajemy poprawkę, której nic nie pilnuje.
      projekcja właściwości CIM, `Get-CpuLoadPercent`, `[System.IO.DriveInfo]`, jeden
      `Get-Process`. Sekcja `### Performance`: **1458–1763 ms → ~280 ms**;
   4. `git tag v1.1.0 && git push origin v1.1.0` — dalej robi CI.
-  (Importance: Medium, Points: 2)
+  (Importance: Medium, Points: 2 — zrobione 2026-08-26.) Punkt 2: żaden test nie pilnował
+  zgodności obu wersji — dopisany (`oh-my-stats.Tests.ps1`, „Should keep the config version
+  in step with the module manifest").
 
-- [ ] **Zdecydować, czy publikujemy do PowerShell Gallery** — blok
+- [x] **Zdecydować, czy publikujemy do PowerShell Gallery** — blok
   `publish-powershell-gallery` w `release.yml` jest zakomentowany i czeka na sekret
   `PSGALLERY_API_KEY`. Dopóki jest zakomentowany, „wydanie" znaczy tylko wpis na
   GitHubie: instalacja to `git clone`, nie `Install-Module`. Decyzja Pawła — jeśli tak,
   klucz idzie przez `password-broker`, nigdy do pliku. (Importance: Low, Points: 3)
+  **Decyzja Pawła 2026-08-26: publikujemy.** Blok odkomentowany i naprawiony — miał dwa
+  błędy, które wywaliłyby go przy pierwszym uruchomieniu: (1) `if:` na poziomie joba nie
+  widzi `secrets`, więc warunek przeniesiony do kroku; (2) `Publish-Module -Path ./pwsh`
+  pada, bo Gallery wymaga, żeby nazwa katalogu równała się nazwie modułu — job stage'uje
+  moduł do katalogu `oh-my-stats/`. Do tego moduł nie dawał się zainstalować samodzielnie:
+  szukał configu w `$PSScriptRoot/../config/`, którego w zainstalowanej paczce nie ma —
+  teraz sprawdza obie ścieżki, a paczka niesie własną kopię `config/default.json`.

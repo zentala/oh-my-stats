@@ -46,6 +46,9 @@ module fast: on a cache hit the static queries must not run at all.
 - A cold run and `-RefreshCache` do make those queries
 - Cache lifecycle: written on a cold run, left untouched on a warm run, rewritten by
   `-RefreshCache`, rebuilt when stale, and a corrupt file does not crash the module
+- Query cost: no `Win32_Processor.LoadPercentage` query (it cost ~1050ms on its own),
+  `-Property` on every CIM call, `Get-Process` called exactly once, `Get-PSDrive` not at
+  all, and `Get-CpuLoadPercent` returning `$null` rather than 0% when the counter fails
 
 **Sandbox:** the module resolves its cache path from `$HOME`, so these tests inject a
 throwaway `$HOME` into the module scope. The real `~/.cache/oh-my-stats` is never read,
@@ -57,7 +60,7 @@ against the median of three warm runs and prints both numbers. It is skipped whe
 
 ```powershell
 Invoke-Pester ./tests/pwsh/performance.Tests.ps1 -Output Detailed
-# cold: 2658 ms | warm (median of 3): 1577 ms | saved: 40.7%
+# cold: 194 ms | warm (median of 3): 172 ms | saved: 11.4%
 ```
 
 The assertion is relative (warm beats cold), not an absolute threshold — thresholds
@@ -76,7 +79,7 @@ depend on the machine and turn into flaky tests.
 | Test Type | Windows | Linux | macOS | Frequency |
 |-----------|---------|-------|-------|-----------|
 | Unit Tests | ✅ | ✅ | ✅ | Every PR |
-| Performance (cache behaviour) | ✅ | — | — | Every PR |
+| Performance (cache + query cost) | ✅ | — | — | Every PR |
 | Integration | ✅ | ✅ | ✅ | Every PR |
 | Module Import | ✅ | ✅ | ✅ | Every commit |
 | Show-SystemStats | ✅ | ✅ | ✅ | Every commit |
@@ -228,13 +231,13 @@ Describe 'Full System Test' {
 
 ## Performance Benchmarks
 
-**Target:** `Show-SystemStats` should execute in < 3s
+**Target:** `Show-SystemStats` should execute in < 300ms - it runs on every shell start.
 
 | Platform | Target | Cold (cache miss) | Warm (cache hit) |
 |----------|--------|-------------------|------------------|
-| Windows | < 3s | ~2.7s | ~1.6s |
-| macOS | < 3s | TBD | TBD |
-| Linux | < 3s | TBD | TBD |
+| Windows | < 300ms | ~194ms | ~172ms |
+| macOS | < 300ms | TBD | TBD |
+| Linux | < 300ms | TBD | TBD |
 
 Measured on an i7-14700 by the stopwatch test in `performance.Tests.ps1`. Run it
 yourself rather than trusting the table — the numbers are machine-specific.
