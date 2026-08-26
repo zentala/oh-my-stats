@@ -107,6 +107,10 @@ wydajemy poprawkę, której nic nie pilnuje.
   moduł do katalogu `oh-my-stats/`. Do tego moduł nie dawał się zainstalować samodzielnie:
   szukał configu w `$PSScriptRoot/../config/`, którego w zainstalowanej paczce nie ma —
   teraz sprawdza obie ścieżki, a paczka niesie własną kopię `config/default.json`.
+  **Opublikowane 2026-08-26 14:32** — `Find-Module oh-my-stats` zwraca 1.1.0, a
+  `Save-Module` + `Import-Module` z Gallery daje działające `Show-SystemStats`
+  (sprawdzone lokalnie, nie tylko po zielonym jobie):
+  https://www.powershellgallery.com/packages/oh-my-stats/1.1.0
 
 ---
 
@@ -137,6 +141,14 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   accessible by integration` na `/rest/checks/runs`. Domyślny `GITHUB_TOKEN` jest
   read-only; job dostał `permissions: checks: write` + `pull-requests: write`.
   (Importance: Medium, Points: 1)
+- [x] **`softprops/action-gh-release` wywalał się na dwóch assetach o tej samej
+  nazwie** — `Failed to upload release asset README.md. received status code 404`.
+  Lista `files:` miała `pwsh/**` (a tam siedzi `pwsh/README.md`) ORAZ `README.md`
+  z rootu; assety w release'ie są adresowane samą nazwą pliku, więc drugi upload
+  trafiał w nieistniejący zasób. Job kończył się błędem, przez co
+  `publish-powershell-gallery` (`needs: release`) był pomijany — release na
+  GitHubie wyglądał na kompletny, a do Gallery nie szło nic. Fix: pliki wypisane
+  pojedynczo, bez globów. (Importance: High, Points: 1)
 - [x] **PSScriptAnalyzer traktował trzy świadome decyzje jak defekty** —
   `PSAvoidGlobalVars` (`$global:OhMyPwsh_UseNerdFonts` to uzgodniony handshake
   z oh-my-pwsh), `PSUseApprovedVerbs` (`Draw-ProgressBar`) i `PSUseSingularNouns`
