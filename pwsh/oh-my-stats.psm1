@@ -10,6 +10,11 @@ $script:ConfigPath = if ($env:XDG_CONFIG_HOME) {
     Join-Path $HOME ".config/oh-my-stats/config.json"
 }
 
+# CIM property projections. Querying a whole WMI class costs an order of magnitude more
+# than asking for the handful of properties actually read below.
+$script:OsProperties  = @('TotalVisibleMemorySize', 'FreePhysicalMemory', 'LastBootUpTime', 'Caption')
+$script:CpuProperties = @('Name', 'NumberOfCores', 'NumberOfLogicalProcessors', 'MaxClockSpeed')
+
 $script:DefaultConfigPath = Join-Path $PSScriptRoot "../config/default.json"
 $script:Config = if (Test-Path $ConfigPath) {
     Get-Content $ConfigPath | ConvertFrom-Json
@@ -112,6 +117,47 @@ function Save-SystemInfoCache {
     }
 }
 
+<#
+.SYNOPSIS
+    CPU load in percent, from two raw performance-counter samples.
+.DESCRIPTION
+    Win32_PerfRawData_PerfOS_Processor answers in ~27ms, but its PercentProcessorTime is a
+    raw idle-time counter, so a percentage needs two samples and the time between them.
+    The two cheaper-looking alternatives are both worse:
+      * Win32_Processor.LoadPercentage makes the WMI provider sample the CPU itself and
+        costs ~1050ms, over half the runtime of Show-SystemStats.
+      * Get-Counter depends on the performance counter API, which is broken on some
+        machines (it throws 'Internal performance counter API call failed', error c0000bb8)
+        and then costs a failed call before any fallback runs.
+    Returns $null when the counter cannot be read, so the caller can tell "no reading" from
+    a genuine 0%.
+#>
+function Get-CpuLoadPercent {
+    [CmdletBinding()]
+    param([int]$SampleIntervalMs = 100)
+
+    $query = {
+        Get-CimInstance Win32_PerfRawData_PerfOS_Processor -Filter "Name='_Total'" `
+            -Property PercentProcessorTime, Timestamp_Sys100NS -ErrorAction Stop
+    }
+
+    try {
+        $first = & $query
+        Start-Sleep -Milliseconds $SampleIntervalMs
+        $second = & $query
+    } catch {
+        Write-Verbose "Raw performance counters unavailable: $_"
+        return $null
+    }
+
+    $idleDelta = $second.PercentProcessorTime - $first.PercentProcessorTime
+    $timeDelta = $second.Timestamp_Sys100NS - $first.Timestamp_Sys100NS
+    if ($timeDelta -le 0) { return $null }
+
+    $busy = 100 - (100 * $idleDelta / $timeDelta)
+    [math]::Round([math]::Max(0, [math]::Min(100, $busy)), 0)
+}
+
 # Main function: Show system statistics
 function Show-SystemStats {
     [CmdletBinding()]
@@ -165,7 +211,7 @@ function Show-SystemStats {
 
         # Still need OS object for dynamic RAM calculation
         try {
-            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $os = Get-CimInstance Win32_OperatingSystem -Property $script:OsProperties -ErrorAction Stop
         } catch {
             Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
             return
@@ -173,14 +219,14 @@ function Show-SystemStats {
     } else {
         # Query all static data (cache miss or refresh)
         try {
-            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+            $os = Get-CimInstance Win32_OperatingSystem -Property $script:OsProperties -ErrorAction Stop
         } catch {
             Write-Error "Cannot access system information. Please check if WMI service is running or run PowerShell as Administrator."
             return
         }
 
         try {
-            $cpu = Get-CimInstance Win32_Processor -ErrorAction Stop | Select-Object -First 1
+            $cpu = Get-CimInstance Win32_Processor -Property $script:CpuProperties -ErrorAction Stop | Select-Object -First 1
         } catch {
             Write-Error "Cannot access CPU information: $_"
             return
@@ -194,23 +240,16 @@ function Show-SystemStats {
         }
     }
 
-    # CPU load (optimize for speed)
-    try {
-        # Try WMI first (instant, no sampling delay)
-        $cpuLoad = (Get-CimInstance Win32_Processor -ErrorAction Stop).LoadPercentage
-        if (-not $cpuLoad -or $cpuLoad -eq 0) {
-            # Fallback to performance counter with minimal sample interval
-            try {
-                $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction Stop).CounterSamples.CookedValue
-            } catch {
-                Write-Verbose "Performance counters unavailable, using 0%"
-                $cpuLoad = 0
-            }
+    # CPU load
+    $cpuLoad = Get-CpuLoadPercent
+    if ($null -eq $cpuLoad) {
+        # Last resort: ~1050ms, but it is the only reading left.
+        try {
+            $cpuLoad = [math]::Round((Get-CimInstance Win32_Processor -Property LoadPercentage -ErrorAction Stop).LoadPercentage, 0)
+        } catch {
+            Write-Verbose "Cannot get CPU load, using 0%"
+            $cpuLoad = 0
         }
-        $cpuLoad = [math]::Round($cpuLoad, 0)
-    } catch {
-        Write-Verbose "Cannot get CPU load, using 0%"
-        $cpuLoad = 0
     }
 
     # RAM calculations (dynamic data always queried)
