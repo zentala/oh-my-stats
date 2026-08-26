@@ -134,7 +134,9 @@ function Save-SystemInfoCache {
 #>
 function Get-CpuLoadPercent {
     [CmdletBinding()]
-    param([int]$SampleIntervalMs = 100)
+    # 50ms is a long enough window for the counter delta to be meaningful, and it is pure
+    # latency on every shell start - the profile waits for it.
+    param([int]$SampleIntervalMs = 50)
 
     $query = {
         Get-CimInstance Win32_PerfRawData_PerfOS_Processor -Filter "Name='_Total'" `
@@ -266,13 +268,17 @@ function Show-SystemStats {
     }
 
     # Disk calculations (always query for dynamic data)
-    $disk = Get-PSDrive C -ErrorAction SilentlyContinue
-    if ($disk) {
-        $diskUsed = [math]::Round($disk.Used / 1GB, 0)
+    # DriveInfo, not Get-PSDrive: the provider call walks every PowerShell drive and costs
+    # ~70ms, the .NET type reads the same two numbers from the filesystem in about none.
+    $disk = try { [System.IO.DriveInfo]::new('C') } catch { $null }
+    if ($disk -and $disk.IsReady) {
+        $diskFree = $disk.TotalFreeSpace
+        $diskSize = $disk.TotalSize
+        $diskUsed = [math]::Round(($diskSize - $diskFree) / 1GB, 0)
         if (-not $cachedData) {
-            $diskTotal = [math]::Round(($disk.Used + $disk.Free) / 1GB, 0)
+            $diskTotal = [math]::Round($diskSize / 1GB, 0)
         }
-        $diskPercent = [math]::Round($disk.Used / ($disk.Used + $disk.Free) * 100, 0)
+        $diskPercent = [math]::Round(($diskSize - $diskFree) / $diskSize * 100, 0)
     } else {
         $diskUsed = 0
         if (-not $cachedData) {
@@ -282,14 +288,16 @@ function Show-SystemStats {
     }
 
     # Process and uptime (dynamic data always queried)
-    $processCount = (Get-Process).Count
+    # One snapshot, counted twice - each Get-Process enumerates all ~600 processes.
+    $allProcesses = Get-Process -ErrorAction SilentlyContinue
+    $processCount = $allProcesses.Count
     try {
         $uptime = (Get-Date) - $os.LastBootUpTime
     } catch {
         Write-Verbose "Cannot get uptime, using 0"
         $uptime = New-TimeSpan -Days 0 -Hours 0
     }
-    $terminalCount = (Get-Process -Name pwsh,powershell,WindowsTerminal -ErrorAction SilentlyContinue).Count
+    $terminalCount = @($allProcesses | Where-Object { $_.ProcessName -in @('pwsh', 'powershell', 'WindowsTerminal') }).Count
 
     # Static data processing (only on cache miss)
     if (-not $cachedData) {
