@@ -31,7 +31,39 @@ Invoke-Pester ./tests/pwsh/ -Output Detailed
 - CPU vendor detection (Intel, AMD, Apple)
 - Error handling for missing modules
 
-### 3. Cross-Platform Tests (CI/CD)
+### 3. Performance Tests (Pester)
+**Location:** `tests/pwsh/performance.Tests.ps1`
+
+Wall-clock is not asserted in CI — a shared runner is too noisy, and a test that fails
+on a slow morning teaches nothing. What is asserted is the **behaviour** that makes the
+module fast: on a cache hit the static queries must not run at all.
+
+**Coverage:**
+- Cache primitives: `Test-CacheValid` (missing file, fresh, stale past the 7 day TTL),
+  `Get-SystemInfoCache` (missing, corrupt JSON, stale), `Save-SystemInfoCache` round-trip
+- Query routing: a warm cache skips `Win32_PhysicalMemory` and the Windows version
+  registry key, and drops `Win32_Processor` from two calls to one (load only)
+- A cold run and `-RefreshCache` do make those queries
+- Cache lifecycle: written on a cold run, left untouched on a warm run, rewritten by
+  `-RefreshCache`, rebuilt when stale, and a corrupt file does not crash the module
+
+**Sandbox:** the module resolves its cache path from `$HOME`, so these tests inject a
+throwaway `$HOME` into the module scope. The real `~/.cache/oh-my-stats` is never read,
+written, or deleted.
+
+**Stopwatch:** one test in the `Performance`-tagged `Describe` measures a cold run
+against the median of three warm runs and prints both numbers. It is skipped when
+`$env:CI` is set. Run it locally:
+
+```powershell
+Invoke-Pester ./tests/pwsh/performance.Tests.ps1 -Output Detailed
+# cold: 2658 ms | warm (median of 3): 1577 ms | saved: 40.7%
+```
+
+The assertion is relative (warm beats cold), not an absolute threshold — thresholds
+depend on the machine and turn into flaky tests.
+
+### 4. Cross-Platform Tests (CI/CD)
 **Platforms tested:**
 - Windows (latest)
 - Ubuntu Linux (latest)
@@ -44,6 +76,7 @@ Invoke-Pester ./tests/pwsh/ -Output Detailed
 | Test Type | Windows | Linux | macOS | Frequency |
 |-----------|---------|-------|-------|-----------|
 | Unit Tests | ✅ | ✅ | ✅ | Every PR |
+| Performance (cache behaviour) | ✅ | — | — | Every PR |
 | Integration | ✅ | ✅ | ✅ | Every PR |
 | Module Import | ✅ | ✅ | ✅ | Every commit |
 | Show-SystemStats | ✅ | ✅ | ✅ | Every commit |
@@ -197,17 +230,20 @@ Describe 'Full System Test' {
 
 **Target:** `Show-SystemStats` should execute in < 3s
 
-| Platform | Target | Current |
-|----------|--------|---------|
-| Windows | < 3s | ~2.5s |
-| macOS | < 3s | TBD |
-| Linux | < 3s | TBD |
+| Platform | Target | Cold (cache miss) | Warm (cache hit) |
+|----------|--------|-------------------|------------------|
+| Windows | < 3s | ~2.7s | ~1.6s |
+| macOS | < 3s | TBD | TBD |
+| Linux | < 3s | TBD | TBD |
+
+Measured on an i7-14700 by the stopwatch test in `performance.Tests.ps1`. Run it
+yourself rather than trusting the table — the numbers are machine-specific.
 
 ## Future Testing Improvements
 
 - [ ] Add integration tests for all CPU vendors
 - [ ] Add tests for Windows Server
-- [ ] Add performance regression tests
+- [x] Add performance regression tests (`tests/pwsh/performance.Tests.ps1`)
 - [ ] Add memory leak detection
 - [ ] Add stress tests (repeated execution)
 - [ ] Add screenshot regression tests
@@ -276,5 +312,5 @@ When filing bugs, include:
 
 ---
 
-**Last Updated:** 2025-01-06
+**Last Updated:** 2026-08-26
 **Status:** ✅ Active
