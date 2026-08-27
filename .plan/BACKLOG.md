@@ -163,14 +163,28 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   wstrzyknięcie sandboxa musi się powtarzać w `BeforeEach`, nie tylko raz w
   `BeforeAll`. (Importance: High, Points: 2)
 
-- [ ] **Screenshot w README wisi na zewnętrznym CDN-ie** — `README.md:25` wskazuje
-  na `cdn.zentala.agency/terminal/pwsh.png` (podmienione 2026-08-27 z martwego
-  `cdn.zentala.io`, exit 6 = brak DNS). Repo ma już lokalną kopię
-  `screenshots/pwsh.png` (28 kB, untracked) — commit + relatywna ścieżka
-  uodporniłyby README na kolejną migrację domeny, ale zepsułyby obrazek wszędzie,
-  gdzie README jest renderowane poza GitHubem (release asset, PowerShell Gallery).
-  Decyzja Pawła. (Importance: Low, Points: 1)
-- [ ] **`pawel@zentala.agency` niezweryfikowany** — `docs/CONTRIBUTING.md:226`,
-  podmieniony z `pawel@zentala.io` razem z CDN-em. Sprawdzone jest tylko to, że
-  domena `zentala.agency` odpowiada po HTTP; czy skrzynka pod tym adresem
-  odbiera pocztę — nie. (Importance: Medium, Points: 1)
+- [x] **Screenshot w README wisiał na martwej domenie** — `README.md:25` wskazywał
+  na `cdn.zentala.io` (exit 6, brak DNS). Przepięte na `cdn.zentala.agency`
+  (200, obrazek obejrzany — to faktycznie ten terminal). Przy okazji wyszło, że
+  leżący lokalnie `screenshots/pwsh.png` **był zupełnie innym plikiem** —
+  zrzutem strony zentala.agency z przeglądarki, nie terminala. Podmieniony na
+  wersję z CDN-u i zacommitowany. (Importance: Medium, Points: 1)
+- [x] **IconUri modułu zwracał 404 — Gallery pokazywał domyślną zaślepkę** —
+  `pwsh/oh-my-stats.psd1:22` wskazywał na `screenshots/icon.png`, którego w repo
+  nigdy nie było (katalog `screenshots/` w ogóle nie był śledzony). Potwierdzone
+  na żywej stronie pakietu: `<img class="package-icon" src=".../packageDefaultIcon.svg">`.
+  Dorysowany ikonka 256×256 (trzy paski postępu w kolorach modułu), zacommitowana,
+  raw URL oddaje 200. **Do Gallery trafi dopiero z nowym wydaniem.**
+  (Importance: Medium, Points: 2)
+- [x] **Opis modułu kłamał o platformach** — `Description` mówił „Cross-platform”,
+  a `Tags` niosły `Linux` i `macOS`, choć moduł czyta WMI/CIM i jest wyłącznie
+  windowsowy (patrz wpis o matrycy testów wyżej). Opis przepisany na konkretny
+  (co pokazuje, czym się konfiguruje, że cache trzyma to poza czasem startu,
+  „Windows only”), tagi poprawione, te same fałszywe deklaracje wycięte z README
+  (nagłówek, badge platformy, sekcja Features, nagłówki instalacji).
+  (Importance: High, Points: 2)
+- [ ] **Wydać v1.1.1, żeby ikona i opis dotarły do PowerShell Gallery** — strona
+  pakietu pokazuje metadane z opublikowanego `.psd1`, więc poprawki w repo nic tam
+  nie zmieniają dopóki nie pójdzie nowe wydanie. Krok na zewnątrz i nieodwracalny
+  (wersji z Gallery się nie cofa) — czeka na decyzję Pawła.
+  (Importance: Medium, Points: 1)
