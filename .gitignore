@@ -48,8 +48,9 @@ package-lock.json
 .claude/worktrees/
 .claude-worktrees/
 
-# Planning material - .plan/ is its own private repo, never part of the module
-.plan/
+# Planning material - BACKLOG.md is tracked on purpose, the rest is local scratch
+.plan/sessions/
+.plan/reports/
 
 # Pester output
 testResults.xml
