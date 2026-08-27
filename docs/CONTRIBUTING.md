@@ -223,7 +223,7 @@ Maintainers will:
 
 - 💬 Open a [Discussion](https://github.com/zentala/oh-my-stats/discussions)
 - 🐛 File an [Issue](https://github.com/zentala/oh-my-stats/issues)
-- 📧 Email: pawel@zentala.io
+- 📧 Email: pawel@zentala.agency
 
 ---
 

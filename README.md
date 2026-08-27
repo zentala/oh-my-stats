@@ -22,7 +22,7 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 
 ## 📸 Screenshots
 
-<img src="https://cdn.zentala.io/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
+<img src="https://cdn.zentala.agency/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
 
 ## 📋 Requirements
 
