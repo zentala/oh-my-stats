@@ -75,8 +75,10 @@ Create `~/.config/oh-my-stats/config.json` to customize:
 ## Performance Cache
 
 Static system info (OS version, CPU model, RAM specs) is cached for 7 days in `~/.cache/oh-my-stats/system-info.json`:
-- First run: ~2.9s (generates cache)
-- Subsequent runs: ~1.6s (44% faster!)
+Measured on a desktop machine (PowerShell 7.5, Windows 11):
+- New shell, module import plus the first banner: ~0.28s
+- Redraw in a shell that already imported the module: ~0.13s
+- Rebuilding the cache: ~0.13-0.29s
 - Force refresh: `Show-SystemStats -RefreshCache`
 
 ## Customization

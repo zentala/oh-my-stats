@@ -9,7 +9,7 @@
 
 > 🎨 A system stats banner for your PowerShell prompt
 
-A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with Nerd Fonts. Zsh, Bash and Fish ports are planned, not written.
+A neofetch-like banner for **PowerShell 7 on Windows** for terminals with Nerd Fonts.
 
 <img src="https://cdn.zentala.agency/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
 
@@ -18,10 +18,9 @@ A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with
 - 🖥️ **Real-time system stats** - CPU, RAM, Disk usage with color-coded progress bars
 - 🎨 **Beautiful UI** - Nerd Font icons and ANSI colors
 - 🔧 **Customizable** - JSON config for modules, colors, and icons
-- 🚀 **Fast loading** - Smart caching system, ~1.6s startup (44% faster!)
+- 🚀 **Fast loading** - Static system info is cached, so the banner costs ~0.3s at shell startup
 - 🧪 **Well tested** - 99 Pester tests covering CPU detection, error handling, caching
 - 🪟 **Windows** - Windows 10/11 on PowerShell 7+ (stats come from WMI/CIM)
-- 🐚 **Multi-shell** - PowerShell today; Zsh, Bash and Fish planned
 
 ## 🚀 Installation
 
@@ -65,10 +64,6 @@ irm https://raw.githubusercontent.com/zentala/oh-my-stats/main/pwsh/install.ps1 
 For working on the module itself - see
 [CONTRIBUTING](docs/CONTRIBUTING.md#3-development-setup).
 
-### Zsh / Bash
-
-Not written yet. PowerShell only for now.
-
 ## ⚙️ Configuration
 
 It runs on defaults out of the box. The common switches:
@@ -106,25 +101,6 @@ Contributions welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
 - Pull request process
 - Development setup
 - Testing requirements
-
-### Development Roadmap
-
-**Current status: v1.1.1 (Windows, PowerShell 7+)**
-- [x] PowerShell module (Windows)
-- [x] Error handling & robustness
-- [x] Performance caching (44% faster)
-- [x] Test suite (99 tests)
-- [x] Documentation
-- [x] CI/CD (GitHub Actions)
-- [x] PowerShell Gallery release
-- [ ] Package managers (Scoop, Winget)
-
-**Future:**
-- [ ] PowerShell (macOS/Linux support)
-- [ ] Zsh support
-- [ ] Bash support
-- [ ] Fish support
-- [ ] Theme engine
 
 ## 📄 License
 

@@ -232,4 +232,21 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   "(coming soon)". Użytkownik podaje przełącznik i nic się nie dzieje, bez ostrzeżenia.
   Do decyzji: zaimplementować tryb kompaktowy albo usunąć parametr i wzmiankę z docs.
   Znalezione przy rozbijaniu README na `docs/` (2026-08-27). (Importance: Medium, Points: 3)
+- [ ] **Port na Zsh** — dziś moduł istnieje tylko dla PowerShell 7 na Windows.
+  Wymaga: odczytu CPU/RAM/dysku bez WMI (`/proc`, `sysctl`), wspólnego czytania
+  `config/default.json`, tego samego układu banera i paska postępu, własnego
+  `install.zsh`. Kontrakt funkcji: `docs/CONTRIBUTING.md` → „Adding New Shell
+  Support". Wyjęte z README 2026-08-27 (README mówi tylko o tym, co istnieje).
+  (Importance: Low, Points: 13)
+- [ ] **Port na Bash** — jak wyżej, po Zsh; większość logiki powinna być wtedy do
+  współdzielenia między oboma. (Importance: Low, Points: 8)
+- [ ] **Port na Fish** — jak wyżej; osobna składnia, więc nie da się tego dostać za
+  darmo z portu Bash/Zsh. (Importance: Low, Points: 8)
+- [ ] **PowerShell na macOS/Linux** — moduł ciągnie statystyki z WMI/CIM, więc poza
+  Windows nie ruszy mimo że sam PowerShell 7 tam działa. Trzeba rozdzielić warstwę
+  zbierania danych od renderowania. (Importance: Low, Points: 8)
+- [ ] **Paczki: Scoop i Winget** — dziś jedyne kanały to PSGallery i `irm | iex`.
+  Wyjęte z roadmapy w README. (Importance: Low, Points: 5)
+- [ ] **Theme engine** — pomysł z roadmapy w README, bez planu i bez decyzji, czy
+  w ogóle chcemy go ponad obecny `colors`/`icons` w configu. (Importance: Low, Points: ?)
 
