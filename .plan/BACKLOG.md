@@ -250,3 +250,78 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
 - [ ] **Theme engine** — pomysł z roadmapy w README, bez planu i bez decyzji, czy
   w ogóle chcemy go ponad obecny `colors`/`icons` w configu. (Importance: Low, Points: ?)
 
+
+## Z przeglądu 2026-08-27 (trzej agenci: UX+docs, DX, produkt)
+
+- [ ] **`stats` jako komenda, nie tylko baner startowy** — decyzja Pawła 2026-08-27:
+  „czy można z tego zrobić skrypt, np. `stats`? Jak go wcisnę, to pokażą się
+  statystyki, a poza tym to przy starcie go odpalam". Dziś jedyna droga do
+  banera to `Show-SystemStats` (długa, PowerShell-owa nazwa, do wpisania ręcznie).
+  Zakres: krótki alias/funkcja `stats` eksportowana z modułu, wpisywalna w każdej
+  chwili; ta sama komenda w profilu przy starcie; do rozważenia `stats --watch`
+  (odświeżanie w miejscu co N sekund) jako osobna pozycja. To poszerza wartość
+  narzędzia z „ozdoba przy starcie" na „szybki podgląd obciążenia na żądanie" —
+  czyli dokładnie to, o co Pawłowi chodziło od początku (CPU i RAM pod ręką).
+  Uwaga na kolizję: `stats` to popularna nazwa, potrzebny sprawdzian
+  `Get-Command stats` przed rejestracją aliasu. (Importance: High, Points: 5)
+- [ ] **Opcjonalne logo ASCII przy banerze** — `display.showLogo`, domyślnie wyłączone.
+  Przegląd produktowy: to jest element, który ludzie pokazują na screenshotach, a
+  screenshot jest głównym kanałem rozgłosu w tej kategorii. Dotyka wyłącznie
+  warstwy renderowania, nie logiki CIM/cache. Uwaga: Paweł zaznaczył, że jemu
+  zależy przede wszystkim na obciążeniu CPU/RAM, więc logo nie może opóźniać
+  startu ani zajmować miejsca w domyślnym widoku. (Importance: Medium, Points: 5)
+- [ ] **Cykl promocyjny** — dopisać projekt do list „awesome" (awesome-powershell,
+  awesome-shell, awesome-windows, listy Nerd Font / ricing), wpisy na r/PowerShell,
+  r/unixporn, r/Windows11; post na LinkedIn (szkic: `.plan/marketing/linkedin-launch.md`).
+  Warunek wejścia: najpierw naprawione znaleziska High z tego przeglądu — na listy
+  wchodzi się raz, z zepsutą dokumentacją nie warto. (Importance: Medium, Points: 3)
+- [ ] **Zepsuty `config.json` wywala start terminala** — `pwsh/oh-my-stats.psm1:24-28`
+  i `:179-183` robią `Get-Content | ConvertFrom-Json` bez try/catch. Przy instalacji
+  z Gallery (profil bez `-ErrorAction`) niepoprawny JSON = wyjątek na KAŻDYM nowym
+  terminalu; przy instalatorze jednolinijkowym = cichy zanik banera bez komunikatu.
+  A to jest dokładnie ten plik, który dokumentacja każe użytkownikowi edytować ręcznie.
+  Dodać try/catch z czytelnym komunikatem + sekcję w `docs/TROUBLESHOOTING.md`.
+  (Importance: High, Points: 3)
+- [ ] **`thresholds` i `performance` w configu to martwe klucze** — `config/default.json`
+  je deklaruje, `pwsh/oh-my-stats.psm1` nigdy ich nie czyta: progi 60/80 są zaszyte
+  w kodzie (linie 46-47, 490, 502, 515), cache zawsze trzyma 7 dni (linia 83) mimo
+  `performance.cacheDuration: 5`. Użytkownik zmienia próg i nic się nie dzieje.
+  Do decyzji: podłączyć klucze pod kod albo usunąć je z `default.json`. Wzmianki
+  z `pwsh/README.md` już usunięte. (Importance: High, Points: 3)
+- [ ] **Nerd Font opisany jako wymagany, a domyślnie wyłączony** — `config/default.json:18`
+  ma `"nerdFonts": false`, więc moduł startuje bez niego; ale README obu wersji pisze
+  „You need (…) a Nerd Font". Gorzej: w trybie fallback większość `unicodeIcons`
+  (`user`, `computer`, `windows`, `powershell`, `cpuChip`, `folder`, `terminal`,
+  `process`, `uptime`) to **puste stringi** — realny fallback to tylko cztery ikony.
+  Naprawić opis ORAZ dać prawdziwe znaki zastępcze. To jest ta jedna rzecz, którą
+  mamy lepiej niż winfetch/pwsh-neofetch, a dziś jest w połowie zepsuta i nieopisana.
+  (Importance: High, Points: 3)
+- [ ] **Instalator obiecuje „using defaults", a zostawia moduł bez configu** —
+  `pwsh/install.ps1:73-78`: gdy pobranie configu padnie, skrypt drukuje ostrzeżenie
+  i idzie dalej, ale nic nie zapisuje. Przy następnym imporcie `$script:DefaultConfigPath`
+  jest `$null`, `Get-Content $null` rzuca nieczytelny wyjątek .NET. Zaszyć treść
+  domyślnego configu w instalatorze zamiast liczyć na sieć. (Importance: Medium, Points: 2)
+- [ ] **`Import-Module` bez `-DisableNameChecking` drukuje ostrzeżenie przy każdym starcie** —
+  moduł eksportuje `Draw-ProgressBar` (niezatwierdzony czasownik, CI ma dla niego
+  wyjątek w `test.yml:175`), więc PowerShell wypisuje żółte WARNING zanim użytkownik
+  zobaczy baner. Dodać `-DisableNameChecking` w obu instrukcjach README i w instalatorze.
+  NIESPRAWDZONE na żywej maszynie — przed poprawką potwierdzić w prawdziwym terminalu.
+  (Importance: Medium, Points: 1)
+- [ ] **`docs/CONTRIBUTING.md:78` przeczy `.github/workflows/test.yml:175`** — CONTRIBUTING
+  podaje `Draw-` jako zatwierdzony czasownik PowerShella, CI wyłącza dla niego regułę
+  `PSUseApprovedVerbs` z komentarzem, że nim nie jest. (Importance: Medium, Points: 1)
+- [ ] **`docs/TODO-WINDOWS.md` to sierota** — ~300 linii odhaczonej listy z v1.0,
+  po polsku (łamie „all files in English"), z nieaktualnymi liczbami wydajności
+  („~5s"), nielinkowana z żadnego indeksu. Przenieść do `.plan/` jako materiał
+  historyczny albo oznaczyć `ARCHIVED` na górze. (Importance: Medium, Points: 2)
+- [ ] **Przykładowy JSON w `docs/CONFIGURATION.md:43-56` ma inne kody ikon niż
+  `config/default.json:21-35`** — stoi tuż pod zdaniem, że domyślne wartości pochodzą
+  z `default.json`, więc czyta się jak kopia tych domyślnych. Podmienić na prawdziwy
+  fragment albo opisać jako przykład. (Importance: Low, Points: 1)
+- [ ] **`bash/README.md:50` obiecuje „Target Release: v3.0 (Q3 2025)"** — data minęła
+  ponad rok temu. Usunąć datę. (Importance: Low, Points: 1)
+- [ ] **Rozszerzalność: własne sekcje banera** — dziś zestaw wierszy jest zamknięty
+  w kodzie, nie da się dopisać własnego bez forka. U winfetch mechanizm `info_*`
+  jest tym, wokół czego powstała społeczność configów. (Importance: Medium, Points: 5)
+- [ ] **Tagi `fastfetch`, `sysinfo`, `winfetch` w `pwsh/oh-my-stats.psd1`** — neofetch
+  jest martwy, ruch wyszukiwania idzie dziś w stronę fastfetch. (Importance: Low, Points: 1)

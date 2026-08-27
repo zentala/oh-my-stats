@@ -92,7 +92,10 @@ jobs:
         New-Item -ItemType Directory -Path "$stage/config" -Force | Out-Null
         Copy-Item ./pwsh/oh-my-stats.psd1, ./pwsh/oh-my-stats.psm1 $stage
         Copy-Item ./config/default.json "$stage/config/"
-        Copy-Item ./LICENSE, ./README.md $stage
+        # pwsh/README.md, not the root one: the package has no docs/ folder, so
+        # only the package README's absolute GitHub links survive the install.
+        Copy-Item ./LICENSE $stage
+        Copy-Item ./pwsh/README.md "$stage/README.md"
         Import-Module "$stage/oh-my-stats.psd1" -Force -ErrorAction Stop
         Write-Host "Staged oh-my-stats $((Get-Module oh-my-stats).Version)"
 

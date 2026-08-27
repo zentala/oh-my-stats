@@ -85,15 +85,6 @@ To change which rows show up, the colors, the icons or the bar width, drop a
 - [Testing](docs/TESTING.md) - running the suite, test matrix, coverage goals
 - [Contributing](docs/CONTRIBUTING.md) - development setup and code style
 
-## 🧩 Works well with
-
-None of these are required - oh-my-stats runs on its own, and picks them up if
-they are there:
-
-- [Oh My Posh](https://ohmyposh.dev/) - prompt theming
-- [Terminal-Icons](https://github.com/devblackops/Terminal-Icons) - file icons in listings
-- [PSReadLine](https://github.com/PowerShell/PSReadLine) - history and completion
-
 ## 🤝 Contributing
 
 Contributions welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:

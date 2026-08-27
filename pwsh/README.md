@@ -38,9 +38,8 @@ Override defaults by editing that file, or point at another one per call:
 Show-SystemStats -ConfigPath "C:/my-config.json"
 ```
 
-Keys: `modules` (which rows to draw), `display` (bar width, compact mode, Nerd
-Font on/off), `icons` / `unicodeIcons`, `colors`, `thresholds` (warning and
-critical percentages), `performance` (caching).
+Keys: `modules` (which rows to draw), `display` (bar width, Nerd Font on/off),
+`icons` / `unicodeIcons`, `colors`.
 
 ## 🎨 Customization
 
@@ -49,14 +48,8 @@ Icon codes, colors, every config key and the helper functions:
 
 ## 📦 Dependencies
 
-**Required:**
 - PowerShell 7.x+
-- Nerd Font installed
-
-**Optional (auto-detected):**
-- Oh My Posh
-- PSReadLine
-- Terminal-Icons
+- A Nerd Font, if you want the full icon set - see Configuration
 
 ## 🧪 Testing
 
@@ -74,12 +67,11 @@ Draw the stats banner.
 
 **Parameters:**
 - `-ConfigPath` - path to another config file
-- `-Compact` - compact display mode
 - `-NoModuleStatus` - hide the module row
 - `-RefreshCache` - rebuild the cached system info
 
 ```powershell
-Show-SystemStats -Compact
+Show-SystemStats -NoModuleStatus
 ```
 
 ### `Draw-ProgressBar`
