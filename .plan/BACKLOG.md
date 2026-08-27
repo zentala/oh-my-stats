@@ -227,3 +227,9 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   podmieniony z `pawel@zentala.io` razem z CDN-em. Sprawdzone jest tylko to, że
   domena `zentala.agency` odpowiada po HTTP; czy skrzynka pod tym adresem
   odbiera pocztę — nie. (Importance: Medium, Points: 1)
+- [ ] **`-Compact` jest martwym parametrem** — `pwsh/oh-my-stats.psm1:172` deklaruje
+  `[switch]$Compact`, ale nigdzie go nie czyta; dokumentacja od zawsze pisze
+  "(coming soon)". Użytkownik podaje przełącznik i nic się nie dzieje, bez ostrzeżenia.
+  Do decyzji: zaimplementować tryb kompaktowy albo usunąć parametr i wzmiankę z docs.
+  Znalezione przy rozbijaniu README na `docs/` (2026-08-27). (Importance: Medium, Points: 3)
+
