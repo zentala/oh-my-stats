@@ -325,3 +325,47 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   jest tym, wokół czego powstała społeczność configów. (Importance: Medium, Points: 5)
 - [ ] **Tagi `fastfetch`, `sysinfo`, `winfetch` w `pwsh/oh-my-stats.psd1`** — neofetch
   jest martwy, ruch wyszukiwania idzie dziś w stronę fastfetch. (Importance: Low, Points: 1)
+
+### Z przeglądu DX (agent uruchomił testy: 98/99)
+
+- [ ] **Testy mockują API, których kod już nie wywołuje** — `tests/pwsh/oh-my-stats.Tests.ps1:166-175`
+  mockuje `Get-PSDrive`, a dysk liczy dziś `[System.IO.DriveInfo]::new('C')` (`.psm1:278`);
+  `:177-186` mockuje `Get-Counter`, a CPU liczy `Win32_PerfRawData_PerfOS_Processor`.
+  Oba testy przechodzą i nie sprawdzają niczego — ścieżka błędu nie jest wykonywana.
+  Potwierdzenie krzyżowe: `performance.Tests.ps1:379-384` osobno asertuje, że
+  `Get-PSDrive` NIGDY nie jest wołane. To jest zielony przebieg bez pokrycia, czyli
+  dokładnie ten wzorzec, którego nie wolno mylić z sukcesem. (Importance: High, Points: 3)
+- [ ] **Brak testu zgodności wersji z `CHANGELOG.md`** — `tests/pwsh/oh-my-stats.Tests.ps1:64-74`
+  pilnuje tylko `config/default.json` vs `.psd1`. Dziś `1.1.1` zgadza się wszędzie
+  przypadkiem. Dodać test: najnowszy nagłówek `## [X.Y.Z]` (pomijając `[Unreleased]`)
+  równy `ModuleVersion`. To wprost realizacja wniosku z wpisu feedbacku o rozjeżdżonych
+  faktach w dokumentacji. (Importance: Medium, Points: 2)
+- [ ] **`Show-SystemStats` ma ~380 linii przy limicie 50** — `pwsh/oh-my-stats.psm1:169-548`.
+  Trzy bloki proszą się o wydzielenie i dają się przetestować osobno: nazewnictwo CPU
+  (322-351, kaskada regexów Intel/AMD/Apple), wersja i edycja Windows (354-403, rejestr
+  + tabela buildów), render trzech wierszy (485-520). Progi kolorów 80/60 są powtórzone
+  w czterech miejscach, w tym w `Draw-ProgressBar:31-58` — z tego wyjdzie
+  `Get-ThresholdColor`. Bez rozbijania na wiele plików. (Importance: Medium, Points: 5)
+- [ ] **Więcej martwych kluczy configu, niż sądziliśmy** — poza `thresholds` i
+  `performance` nie są czytane także: `display.compactMode`, `display.showHeader`,
+  `display.showProgressBars`, `display.showPercentageColors`, `modules.shellModules`.
+  Zero trafień w całym `.psm1`. `docs/CONFIGURATION.md:40` dokumentuje `shellModules`
+  jako działający klucz. Jedna decyzja na wszystkie: podłączyć albo usunąć.
+  (Importance: Medium, Points: 3)
+- [ ] **Instalator nie kładzie `config/` tam, gdzie moduł go szuka** —
+  `pwsh/install.ps1:54-55` pobiera tylko `.psm1`/`.psd1` do folderu modułu, a moduł
+  szuka domyślnego configu relatywnie do `$PSScriptRoot` (`config/default.json`).
+  NIESPRAWDZONE end-to-end — przed poprawką odpalić instalator z zablokowanym
+  pobieraniem configu i zobaczyć, co naprawdę robi. (Importance: Medium, Points: 3)
+- [ ] **`docs/CONTRIBUTING.md:177-190` opisuje strukturę folderu shell, której nie ma** —
+  wzorzec (`oh-my-stats.[ext]`, `install.[ext]`, `functions/`) nie jest zrealizowany
+  w żadnym z `bash/`, `zsh/`, `fish/` — wszędzie sam placeholder. Dopisać jedno zdanie,
+  że to wzorzec docelowy. (Importance: Low, Points: 1)
+- [ ] **`release.yml`: brak klucza Gallery kończy job sukcesem** — jest `::warning::`
+  i `exit 0`, więc krok, który nic nie opublikował, raportuje sukces. Adnotacja jest
+  widoczna w UI, więc to złagodzony przypadek, ale wzorzec jest ten sam co zawsze:
+  cisza nie może wyglądać jak sukces. Rozważyć `exit 78`. (Importance: Low, Points: 2)
+- [ ] **Brak `FileList` w `pwsh/oh-my-stats.psd1`** — Gallery pakuje cały folder, więc
+  nie da się jawnie kontrolować, co wejdzie do paczki. (Importance: Low, Points: 1)
+- [ ] **Pester bez górnego ograniczenia wersji** — `docs/CONTRIBUTING.md:55` i `test.yml`
+  pinują tylko `-MinimumVersion 5.0.0`, lokalnie chodzi 6.1.0. (Importance: Low, Points: 1)

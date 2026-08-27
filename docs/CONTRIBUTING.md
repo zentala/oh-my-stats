@@ -81,7 +81,7 @@ Invoke-Pester ./tests/pwsh/ -CodeCoverage ./pwsh/*.psm1
 - Indent with **4 spaces** (no tabs)
 - Maximum line length: **120 characters**
 - Add comment-based help to functions
-- Keep functions focused and under 100 lines when possible
+- Keep functions focused and under 50 lines
 
 **Example:**
 ```powershell

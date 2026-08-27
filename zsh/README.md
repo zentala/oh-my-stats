@@ -47,4 +47,4 @@ show-stats
 
 ---
 
-**Target Release:** v2.0 (Q2 2025)
+**Target Release:** TBD
