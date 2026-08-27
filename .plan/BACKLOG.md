@@ -162,3 +162,15 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   errors` **re-importuje moduł**, co odtwarza jego zakres z prawdziwym `$HOME` —
   wstrzyknięcie sandboxa musi się powtarzać w `BeforeEach`, nie tylko raz w
   `BeforeAll`. (Importance: High, Points: 2)
+
+- [ ] **Screenshot w README wisi na zewnętrznym CDN-ie** — `README.md:25` wskazuje
+  na `cdn.zentala.agency/terminal/pwsh.png` (podmienione 2026-08-27 z martwego
+  `cdn.zentala.io`, exit 6 = brak DNS). Repo ma już lokalną kopię
+  `screenshots/pwsh.png` (28 kB, untracked) — commit + relatywna ścieżka
+  uodporniłyby README na kolejną migrację domeny, ale zepsułyby obrazek wszędzie,
+  gdzie README jest renderowane poza GitHubem (release asset, PowerShell Gallery).
+  Decyzja Pawła. (Importance: Low, Points: 1)
+- [ ] **`pawel@zentala.agency` niezweryfikowany** — `docs/CONTRIBUTING.md:226`,
+  podmieniony z `pawel@zentala.io` razem z CDN-em. Sprawdzone jest tylko to, że
+  domena `zentala.agency` odpowiada po HTTP; czy skrzynka pod tym adresem
+  odbiera pocztę — nie. (Importance: Medium, Points: 1)
