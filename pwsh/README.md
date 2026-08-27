@@ -1,47 +1,47 @@
 # oh-my-stats for PowerShell
 
-PowerShell implementation of oh-my-stats - cross-platform system statistics display.
+PowerShell implementation of oh-my-stats - a system stats banner for your prompt.
+Windows and PowerShell 7+; the stats come from WMI/CIM.
 
 ## 🚀 Installation
 
-### Method 1: Automatic Install
+### From the PowerShell Gallery
+
 ```powershell
-# Download and run installer
-irm https://raw.githubusercontent.com/zentala/oh-my-stats/main/pwsh/install.ps1 | iex
-```
+Install-Module -Name oh-my-stats -Scope CurrentUser
 
-### Method 2: Manual Install
-```powershell
-# Clone repository
-git clone https://github.com/zentala/oh-my-stats.git
-cd oh-my-stats/pwsh
-
-# Import module in your $PROFILE
-Add-Content $PROFILE "`nImport-Module $PWD/oh-my-stats.psm1"
-Add-Content $PROFILE "Show-SystemStats"
-
-# Reload profile
+Add-Content $PROFILE "`nImport-Module oh-my-stats"
+Add-Content $PROFILE "Show-SystemStats`n"
 . $PROFILE
 ```
 
-### Method 3: PowerShell Gallery (Coming Soon)
+Package page: [powershellgallery.com/packages/oh-my-stats](https://www.powershellgallery.com/packages/oh-my-stats).
+
+### Alternative: one-line installer
+
+Downloads the module from GitHub, writes a default config and edits your profile:
+
 ```powershell
-Install-Module oh-my-stats -Scope CurrentUser
+irm https://raw.githubusercontent.com/zentala/oh-my-stats/main/pwsh/install.ps1 | iex
 ```
+
+### Alternative: run from a clone
+
+See [CONTRIBUTING](https://github.com/zentala/oh-my-stats/blob/main/docs/CONTRIBUTING.md#3-development-setup).
 
 ## ⚙️ Configuration
 
 Config location: `~/.config/oh-my-stats/config.json`
 
-Override default settings:
+Override defaults by editing that file, or point at another one per call:
+
 ```powershell
-# In your $PROFILE before Show-SystemStats
-$OhMyStatsConfig = @{
-    ProgressBarWidth = 60
-    ShowUptime = $false
-    Theme = "dracula"
-}
+Show-SystemStats -ConfigPath "C:/my-config.json"
 ```
+
+Keys: `modules` (which rows to draw), `display` (bar width, compact mode, Nerd
+Font on/off), `icons` / `unicodeIcons`, `colors`, `thresholds` (warning and
+critical percentages), `performance` (caching).
 
 ## 🎨 Customization
 
@@ -86,7 +86,7 @@ Invoke-Pester ./tests/pwsh/
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](../docs/CONTRIBUTING.md)
+See [CONTRIBUTING.md](https://github.com/zentala/oh-my-stats/blob/main/docs/CONTRIBUTING.md)
 
 ## 📝 Functions
 

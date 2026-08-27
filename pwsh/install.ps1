@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # oh-my-stats PowerShell Installer
-# Cross-platform installer for Windows, macOS, Linux
+# Windows, PowerShell 7+ (the module reads stats from WMI/CIM)
 
 param(
     [switch]$Force,

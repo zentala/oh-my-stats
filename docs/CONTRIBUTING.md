@@ -31,10 +31,22 @@ git checkout -b fix/bug-description
 ### 3. Development Setup
 
 #### PowerShell Development
+
+Run the module straight from your clone, so every edit is picked up on the next
+import:
+
 ```powershell
 cd pwsh
-Import-Module ./oh-my-stats.psd1
+Import-Module ./oh-my-stats.psd1 -Force
 Show-SystemStats
+```
+
+To keep the clone as your everyday install, point your profile at it instead of
+the Gallery copy:
+
+```powershell
+Add-Content $PROFILE "`nImport-Module C:/path/to/oh-my-stats/pwsh/oh-my-stats.psd1"
+Add-Content $PROFILE "Show-SystemStats`n"
 ```
 
 #### Testing
@@ -42,7 +54,7 @@ Show-SystemStats
 # Install Pester if needed
 Install-Module Pester -Force -SkipPublisherCheck
 
-# Run all tests (68 tests)
+# Run all tests (99 tests)
 Invoke-Pester ./tests/pwsh/
 
 # Run specific test file
@@ -56,7 +68,8 @@ Invoke-Pester ./tests/pwsh/ -CodeCoverage ./pwsh/*.psm1
 - ✅ CPU detection (8 tests) - Intel, AMD, edge cases
 - ✅ Windows version detection (11 tests) - Win10/11, builds
 - ✅ Helper functions (26 tests) - Draw-ProgressBar, Get-Icon
-- ✅ Main module (23 tests) - Error handling, cache, config
+- ✅ Main module (24 tests) - Error handling, cache, config
+- ✅ Performance (30 tests) - cache hits, startup budget, config version
 
 ## Code Style
 

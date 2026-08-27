@@ -9,6 +9,7 @@ A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue)](https://github.com/PowerShell/PowerShell)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/zentala/oh-my-stats)
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/oh-my-stats?label=PSGallery)](https://www.powershellgallery.com/packages/oh-my-stats)
 
 ## ✨ Features
 
@@ -16,7 +17,7 @@ A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with
 - 🎨 **Beautiful UI** - Nerd Font icons and ANSI colors
 - 🔧 **Customizable** - JSON config for modules, colors, and icons
 - 🚀 **Fast loading** - Smart caching system, ~1.6s startup (44% faster!)
-- 🧪 **Well tested** - 68 Pester tests covering CPU detection, error handling, caching
+- 🧪 **Well tested** - 99 Pester tests covering CPU detection, error handling, caching
 - 🪟 **Windows** - Windows 10/11 on PowerShell 7+ (stats come from WMI/CIM)
 - 🐚 **Multi-shell** - PowerShell today; Zsh, Bash and Fish planned
 
@@ -38,41 +39,39 @@ A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with
 
 ## 🚀 Installation
 
-### PowerShell (Windows)
+### From the PowerShell Gallery
 
-**Method 1: Clone and Import**
+Install the module, then show the banner on every new prompt:
+
 ```powershell
-# Clone repository
-git clone https://github.com/zentala/oh-my-stats.git
-cd oh-my-stats
+Install-Module -Name oh-my-stats -Scope CurrentUser
 
-# Test it out
-Import-Module ./pwsh/oh-my-stats.psd1
-Show-SystemStats
-
-# Add to your profile permanently
-Add-Content $PROFILE "`nImport-Module C:\path\to\oh-my-stats\pwsh\oh-my-stats.psd1"
-Add-Content $PROFILE "Show-SystemStats`n"
-```
-
-**Method 2: Direct Download**
-```powershell
-# Download to PowerShell modules directory
-$modulePath = "$HOME\Documents\PowerShell\Modules\oh-my-stats"
-git clone https://github.com/zentala/oh-my-stats.git $modulePath
-
-# Add to profile
 Add-Content $PROFILE "`nImport-Module oh-my-stats"
 Add-Content $PROFILE "Show-SystemStats`n"
-
-# Reload profile
 . $PROFILE
 ```
 
-### Zsh / Bash
-```bash
-# Coming soon - PowerShell support only for now
+Package page: [powershellgallery.com/packages/oh-my-stats](https://www.powershellgallery.com/packages/oh-my-stats).
+Update later with `Update-Module oh-my-stats`.
+
+### Alternative: one-line installer
+
+Skips the Gallery. Downloads the module from GitHub, writes a default config to
+`~/.config/oh-my-stats/`, and adds the two profile lines for you - your existing
+profile is backed up first:
+
+```powershell
+irm https://raw.githubusercontent.com/zentala/oh-my-stats/main/pwsh/install.ps1 | iex
 ```
+
+### Alternative: run from a clone
+
+For working on the module itself - see
+[CONTRIBUTING](docs/CONTRIBUTING.md#3-development-setup).
+
+### Zsh / Bash
+
+Not written yet. PowerShell only for now.
 
 ## ⚙️ Configuration
 

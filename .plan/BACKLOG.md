@@ -193,6 +193,36 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   nie renderuje dziś zdalnych ikon nikomu. Po naszej stronie nie ma czego naprawiać.
   Gdyby kiedyś miało to zadziałać, droga prowadzi przez ikonę **osadzoną w paczce**
   (`<icon>`, następca `<iconUrl>` w NuGecie), nie przez URL. (Importance: Low, Points: 3)
+- [x] **README nie prowadził do Gallery, a instalacja zaczynała się od `git clone`** —
+  po wydaniu v1.1.1 domyślną drogą jest `Install-Module`, a README nadal
+  proponował „Method 1: Clone and Import" i „Method 2: Direct Download", oba
+  przez `git clone`, i nie linkował strony pakietu ani jednym słowem. Kolejność
+  odwrócona: Gallery jako pierwsza (z `Update-Module`), one-liner
+  `irm .../install.ps1 | iex` jako alternatywa dla tych, którzy nie chcą Gallery,
+  a klonowanie zeszło do CONTRIBUTING, bo jest dla kontrybutorów. Dodany badge
+  `powershellgallery/v` (odpowiada 1.1.1). Badge'a z liczbą pobrań świadomie NIE
+  dodałem — pokazuje dziś `0`. Zweryfikowane: `Find-Module oh-my-stats` → 1.1.1,
+  `Save-Module` daje komplet plików (psd1/psm1/config/LICENSE/README), import tej
+  kopii i `Show-SystemStats` rysuje banner. (Importance: High, Points: 2)
+- [x] **`pwsh/README.md` — plik jadący W PACZCE — kłamał najbardziej** — czytają go
+  ludzie po `Install-Module`, a mówił „cross-platform", „PowerShell Gallery
+  (Coming Soon)" i pokazywał konfigurację przez `$OhMyStatsConfig` z kluczem
+  `Theme`, których w module NIE MA (grep: zero trafień). Blok zastąpiony prawdziwymi
+  kluczami z `config/default.json` i `-ConfigPath`. Dwa linki relatywne
+  (`../docs/CONTRIBUTING.md`) zamienione na URL-e — w paczce nie ma katalogu `docs/`,
+  więc nie prowadziły donikąd. (Importance: High, Points: 2)
+- [ ] **Flaky test: `$warm | Should -BeLessThan $cold`** —
+  `tests/pwsh/performance.Tests.ps1:306` porównuje dwa pomiary zegara bez marginesu.
+  Jeden z czterech przebiegów dziś dał 98/1; trzy kolejne 99/0. Na obciążonym
+  runnerze będzie losowo czerwienić CI, a czerwony przebieg bez przyczyny uczy
+  ignorować testy. Fix: margines (np. `$warm | Should -BeLessThan ($cold * 0.9)`)
+  albo mediana z kilku pomiarów zamiast pojedynczego. (Importance: Medium, Points: 2)
+- [ ] **`Draw-ProgressBar` — nieapprowany czasownik, ostrzeżenie przy każdym imporcie** —
+  `Import-Module oh-my-stats` z Gallery wypisuje WARNING o „unapproved verbs".
+  Widzi to każdy użytkownik przy starcie shella. `Draw` nie jest na liście `Get-Verb`.
+  Rekomendacja: `Write-ProgressBar` jako nazwa właściwa + `Draw-ProgressBar` jako
+  alias, żeby nie zepsuć nikomu profilu; to zmiana publicznego API, więc decyzja
+  Pawła, nie auto-fix. (Importance: Medium, Points: 3)
 - [ ] **`pawel@zentala.agency` niezweryfikowany** — `docs/CONTRIBUTING.md:226`,
   podmieniony z `pawel@zentala.io` razem z CDN-em. Sprawdzone jest tylko to, że
   domena `zentala.agency` odpowiada po HTTP; czy skrzynka pod tym adresem
