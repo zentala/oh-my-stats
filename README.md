@@ -1,15 +1,17 @@
 # oh-my-stats
 
+[![Tests](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml)
+[![Release](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml)
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/oh-my-stats?label=PSGallery)](https://www.powershellgallery.com/packages/oh-my-stats)
+[![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue)](https://github.com/PowerShell/PowerShell)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/zentala/oh-my-stats)
+[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
+
 > 🎨 A system stats banner for your PowerShell prompt
 
 A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with Nerd Fonts. Zsh, Bash and Fish ports are planned, not written.
 
-[![Tests](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml)
-[![Release](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml)
-[![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
-[![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue)](https://github.com/PowerShell/PowerShell)
-[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/zentala/oh-my-stats)
-[![PowerShell Gallery](https://img.shields.io/powershellgallery/v/oh-my-stats?label=PSGallery)](https://www.powershellgallery.com/packages/oh-my-stats)
+<img src="https://cdn.zentala.agency/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
 
 ## ✨ Features
 
@@ -21,40 +23,34 @@ A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with
 - 🪟 **Windows** - Windows 10/11 on PowerShell 7+ (stats come from WMI/CIM)
 - 🐚 **Multi-shell** - PowerShell today; Zsh, Bash and Fish planned
 
-## 📸 Screenshots
-
-<img src="https://cdn.zentala.agency/terminal/pwsh.png" alt="PowerShell Terminal Screenshot" style="max-width: 700px; height: auto;">
-
-## 📋 Requirements
-
-### PowerShell (Windows)
-- PowerShell 7.x+ ([Install](https://github.com/PowerShell/PowerShell))
-- [Nerd Font](https://www.nerdfonts.com/) (e.g., CascadiaCode, FiraCode)
-- [Oh My Posh](https://ohmyposh.dev/) (optional)
-- [Terminal-Icons](https://github.com/devblackops/Terminal-Icons) (optional)
-
-### Zsh (*comming some day hopefully*)
-- Zsh 5.8+
-- Nerd Font installed
-
 ## 🚀 Installation
 
-### From the PowerShell Gallery
+### PowerShell (Windows)
 
-Install the module, then show the banner on every new prompt:
+You need PowerShell 7.x+ ([install](https://github.com/PowerShell/PowerShell)) and a
+[Nerd Font](https://www.nerdfonts.com/) - CascadiaCode or FiraCode, for example - set
+as your terminal font.
+
+#### From the PowerShell Gallery
 
 ```powershell
 Install-Module -Name oh-my-stats -Scope CurrentUser
-
-Add-Content $PROFILE "`nImport-Module oh-my-stats"
-Add-Content $PROFILE "Show-SystemStats`n"
-. $PROFILE
 ```
 
-Package page: [powershellgallery.com/packages/oh-my-stats](https://www.powershellgallery.com/packages/oh-my-stats).
-Update later with `Update-Module oh-my-stats`.
+<details>
+<summary>Show the banner on every new prompt</summary>
 
-### Alternative: one-line installer
+```powershell
+Add-Content $PROFILE "`nImport-Module oh-my-stats"
+Add-Content $PROFILE "Show-SystemStats`n"
+```
+
+Update later with `Update-Module oh-my-stats`. Package page:
+[powershellgallery.com/packages/oh-my-stats](https://www.powershellgallery.com/packages/oh-my-stats).
+
+</details>
+
+#### Alternative: one-line installer
 
 Skips the Gallery. Downloads the module from GitHub, writes a default config to
 `~/.config/oh-my-stats/`, and adds the two profile lines for you - your existing
@@ -64,7 +60,7 @@ profile is backed up first:
 irm https://raw.githubusercontent.com/zentala/oh-my-stats/main/pwsh/install.ps1 | iex
 ```
 
-### Alternative: run from a clone
+#### Alternative: run from a clone
 
 For working on the module itself - see
 [CONTRIBUTING](docs/CONTRIBUTING.md#3-development-setup).
@@ -254,6 +250,15 @@ Invoke-Pester -Path ./tests/pwsh/cpu-detection.Tests.ps1 -Output Detailed
 - ✅ Error handling (WMI failures, registry access, disk errors)
 - ✅ Cache functionality
 
+## 🧩 Works well with
+
+None of these are required - oh-my-stats runs on its own, and picks them up if
+they are there:
+
+- [Oh My Posh](https://ohmyposh.dev/) - prompt theming
+- [Terminal-Icons](https://github.com/devblackops/Terminal-Icons) - file icons in listings
+- [PSReadLine](https://github.com/PowerShell/PSReadLine) - history and completion
+
 ## 🤝 Contributing
 
 Contributions welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
@@ -264,14 +269,14 @@ Contributions welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
 
 ### Development Roadmap
 
-**Current Status: v1.0 (Windows PowerShell)**
-- [x] PowerShell module (Windows) ✅
-- [x] Error handling & robustness ✅
-- [x] Performance caching (44% faster) ✅
-- [x] Comprehensive test suite (68 tests) ✅
-- [x] Documentation ✅
-- [ ] CI/CD (GitHub Actions)
-- [ ] PowerShell Gallery release
+**Current status: v1.1.1 (Windows, PowerShell 7+)**
+- [x] PowerShell module (Windows)
+- [x] Error handling & robustness
+- [x] Performance caching (44% faster)
+- [x] Test suite (99 tests)
+- [x] Documentation
+- [x] CI/CD (GitHub Actions)
+- [x] PowerShell Gallery release
 - [ ] Package managers (Scoop, Winget)
 
 **Future:**
