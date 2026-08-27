@@ -188,3 +188,7 @@ naprawione w tej samej sesji — spisane, bo trzy z nich to pułapki, które wr�
   nie zmieniają dopóki nie pójdzie nowe wydanie. Krok na zewnątrz i nieodwracalny
   (wersji z Gallery się nie cofa) — czeka na decyzję Pawła.
   (Importance: Medium, Points: 1)
+- [ ] **`pawel@zentala.agency` niezweryfikowany** — `docs/CONTRIBUTING.md:226`,
+  podmieniony z `pawel@zentala.io` razem z CDN-em. Sprawdzone jest tylko to, że
+  domena `zentala.agency` odpowiada po HTTP; czy skrzynka pod tym adresem
+  odbiera pocztę — nie. (Importance: Medium, Points: 1)
