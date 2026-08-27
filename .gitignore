@@ -48,3 +48,8 @@ package-lock.json
 .claude/worktrees/
 .claude-worktrees/
 
+# Planning material - .plan/ is its own private repo, never part of the module
+.plan/
+
+# Pester output
+testResults.xml
