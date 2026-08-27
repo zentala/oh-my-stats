@@ -12,7 +12,6 @@ Install-Module -Name oh-my-stats -Scope CurrentUser
 
 Add-Content $PROFILE "`nImport-Module oh-my-stats"
 Add-Content $PROFILE "Show-SystemStats`n"
-. $PROFILE
 ```
 
 Package page: [powershellgallery.com/packages/oh-my-stats](https://www.powershellgallery.com/packages/oh-my-stats).
@@ -45,26 +44,8 @@ critical percentages), `performance` (caching).
 
 ## 🎨 Customization
 
-### Change Icons
-Edit `config.json`:
-```json
-{
-  "icons": {
-    "cpu": "0xF4BC",
-    "ram": "0xEFC5"
-  }
-}
-```
-
-### Disable Modules
-```json
-{
-  "modules": {
-    "terminals": false,
-    "processes": false
-  }
-}
-```
+Icon codes, colors, every config key and the helper functions:
+[docs/CONFIGURATION.md](https://github.com/zentala/oh-my-stats/blob/main/docs/CONFIGURATION.md).
 
 ## 📦 Dependencies
 
@@ -79,10 +60,8 @@ Edit `config.json`:
 
 ## 🧪 Testing
 
-```powershell
-# Run Pester tests
-Invoke-Pester ./tests/pwsh/
-```
+The suite lives in the repo, not in this package:
+[docs/TESTING.md](https://github.com/zentala/oh-my-stats/blob/main/docs/TESTING.md).
 
 ## 🤝 Contributing
 
@@ -91,37 +70,33 @@ See [CONTRIBUTING.md](https://github.com/zentala/oh-my-stats/blob/main/docs/CONT
 ## 📝 Functions
 
 ### `Show-SystemStats`
-Display system statistics welcome screen
+Draw the stats banner.
 
 **Parameters:**
-- `-Config` - Custom config path
-- `-Compact` - Compact display mode
-- `-NoModuleStatus` - Hide module status
+- `-ConfigPath` - path to another config file
+- `-Compact` - compact display mode
+- `-NoModuleStatus` - hide the module row
+- `-RefreshCache` - rebuild the cached system info
 
-**Example:**
 ```powershell
 Show-SystemStats -Compact
 ```
 
-### `Get-SystemInfo`
-Get raw system information object
+### `Draw-ProgressBar`
+```powershell
+Draw-ProgressBar -Percent 75 -Width 30
+```
 
-**Returns:** PSCustomObject with system stats
+### `Get-Icon`
+```powershell
+Get-Icon -HexCode "0xF4BC"
+```
 
 ## 🐛 Troubleshooting
 
-**Icons show as `?`:**
-- Install a Nerd Font: https://www.nerdfonts.com/
-- Set terminal font to the Nerd Font
-
-**Slow loading:**
-- Disable async loading in config
-- Check module load times with `Measure-Command { Import-Module oh-my-stats }`
-
-**Module not found:**
-- Ensure module path is correct in `$PROFILE`
-- Run `Get-Module -ListAvailable` to verify
+Icons as `?`, module not loading, slow start, WMI errors:
+[docs/TROUBLESHOOTING.md](https://github.com/zentala/oh-my-stats/blob/main/docs/TROUBLESHOOTING.md).
 
 ## 📄 License
 
-MIT License - see [LICENSE](../LICENSE)
+MIT License - see [LICENSE](https://github.com/zentala/oh-my-stats/blob/main/LICENSE)
