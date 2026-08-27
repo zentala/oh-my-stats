@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-27
+
+### Fixed
+- **Module icon reached the PowerShell Gallery** - `IconUri` pointed at
+  `screenshots/icon.png`, a file the repository never tracked, so the Gallery fell
+  back to its default placeholder. The icon now exists and is committed.
+- **Description says what the module shows** - the old one named none of it.
+  It now lists the CPU, RAM and disk bars, the OS, uptime and process counts,
+  the Unicode fallback, the JSON config and the cache.
+- **Platform claims match the code** - the manifest advertised `Cross-platform`
+  and tagged `Linux` and `macOS`, but the module reads WMI/CIM and runs on Windows
+  only. Manifest, tags and README now say so.
+- **README screenshot loads again** - it hung on `cdn.zentala.io`, a domain with
+  no DNS since the move to `zentala.agency`.
+
 ## [1.1.0] - 2026-08-26
 
 ### Added

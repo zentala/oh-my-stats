@@ -1,5 +1,5 @@
 @{
-    ModuleVersion = '1.1.0'
+    ModuleVersion = '1.1.1'
     GUID = '8a7b9c5d-4e3f-2a1b-9c8d-7e6f5a4b3c2d'
     Author = 'Paweł Żentała'
     CompanyName = 'oh-my-stats'
