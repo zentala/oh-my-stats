@@ -1,14 +1,14 @@
 # oh-my-stats
 
-> 🎨 Beautiful, cross-platform system stats for your terminal
+> 🎨 A system stats banner for your PowerShell prompt
 
-A neofetch-like system information display tool that works with **PowerShell**, **Zsh**, **Bash**, and **Fish** shells. Designed to integrate seamlessly with modern terminals using Nerd Fonts.
+A neofetch-like banner for **PowerShell 7 on Windows**, built for terminals with Nerd Fonts. Zsh, Bash and Fish ports are planned, not written.
 
 [![Tests](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/test.yml)
 [![Release](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml/badge.svg)](https://github.com/zentala/oh-my-stats/actions/workflows/release.yml)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 [![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue)](https://github.com/PowerShell/PowerShell)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/zentala/oh-my-stats)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)](https://github.com/zentala/oh-my-stats)
 
 ## ✨ Features
 
@@ -17,8 +17,8 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 - 🔧 **Customizable** - JSON config for modules, colors, and icons
 - 🚀 **Fast loading** - Smart caching system, ~1.6s startup (44% faster!)
 - 🧪 **Well tested** - 68 Pester tests covering CPU detection, error handling, caching
-- 🌐 **Cross-platform** - Windows 11/10, macOS, Linux (PowerShell 7+)
-- 🐚 **Multi-shell** - PowerShell (others coming soon)
+- 🪟 **Windows** - Windows 10/11 on PowerShell 7+ (stats come from WMI/CIM)
+- 🐚 **Multi-shell** - PowerShell today; Zsh, Bash and Fish planned
 
 ## 📸 Screenshots
 
@@ -26,7 +26,7 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 
 ## 📋 Requirements
 
-### PowerShell (All platforms)
+### PowerShell (Windows)
 - PowerShell 7.x+ ([Install](https://github.com/PowerShell/PowerShell))
 - [Nerd Font](https://www.nerdfonts.com/) (e.g., CascadiaCode, FiraCode)
 - [Oh My Posh](https://ohmyposh.dev/) (optional)
@@ -38,7 +38,7 @@ A neofetch-like system information display tool that works with **PowerShell**, 
 
 ## 🚀 Installation
 
-### PowerShell (Windows/macOS/Linux)
+### PowerShell (Windows)
 
 **Method 1: Clone and Import**
 ```powershell
