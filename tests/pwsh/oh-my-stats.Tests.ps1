@@ -234,6 +234,21 @@ Describe 'oh-my-stats Module' {
             $cacheTime2 | Should -Be $cacheTime1
         }
 
+        It 'Should use current OS RAM total when the cache is hit' {
+            # Seed a valid cache, then make its RAM total stale.
+            Show-SystemStats -NoModuleStatus | Out-Null
+            $cacheFile = Join-Path $HOME ".cache/oh-my-stats/system-info.json"
+            $cache = Get-Content $cacheFile -Raw | ConvertFrom-Json
+            $cache.RAM.Total = 31.7
+            $cache | ConvertTo-Json -Depth 10 | Set-Content $cacheFile
+
+            $currentTotal = [math]::Round((Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize / 1024 / 1024, 1)
+            $output = Show-SystemStats -NoModuleStatus 6>&1 | Out-String
+
+            $output | Should -Match "/${currentTotal}GB\)"
+            $output | Should -Not -Match '\(32\.0GB/31\.7GB\)'
+        }
+
         It 'Should refresh cache when -RefreshCache is used' {
             # First run creates cache
             Show-SystemStats -NoModuleStatus | Out-Null

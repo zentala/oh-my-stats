@@ -261,9 +261,7 @@ function Show-SystemStats {
 
     # RAM calculations (dynamic data always queried)
     $ramUsed = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1024 / 1024, 1)
-    if (-not $cachedData) {
-        $ramTotal = [math]::Round($os.TotalVisibleMemorySize / 1024 / 1024, 1)
-    }
+    $ramTotal = [math]::Round($os.TotalVisibleMemorySize / 1024 / 1024, 1)
     $ramPercent = [math]::Round(($ramUsed / $ramTotal) * 100, 0)
 
     # Memory speed (only if cache miss)
